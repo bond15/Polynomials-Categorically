@@ -1,8 +1,8 @@
 module poly where
-open import Data.List.Base
-open import Data.Product
-open import Data.Nat
-open import Data.Bool
+open import Data.List.Base using (List ; _∷_ ; [] ; foldr)
+open import Data.Product using (_×_ ; _,_)
+open import Data.Nat using (ℕ)
+open import Data.Bool using (Bool ; true ; false)
 open import Agda.Builtin.Nat renaming (_<_ to _l_)
 -- polynomial as a list(stream?) of coefficients
 data polynomial (X : Set) : Set where
