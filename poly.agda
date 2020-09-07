@@ -1,26 +1,35 @@
 module poly where
-open import Data.List.Base using (List ; _∷_ ; [] ; foldr)
+open import Data.List.Base using (List ; _∷_ ; [] ; foldr ; foldl ; map ; _++_ ; inits ; length ; replicate ; zipWith)
 open import Data.Product using (_×_ ; _,_)
 open import Data.Nat using (ℕ)
 open import Data.Bool using (Bool ; true ; false)
-open import Agda.Builtin.Nat renaming (_<_ to _l_)
+open import Agda.Builtin.Nat renaming (_<_ to _l_ ; _+_ to _+ℕ_ ; _*_ to _*ℕ_)
+
 -- polynomial as a list(stream?) of coefficients
-data polynomial (X : Set) : Set where
-  coef : List (( ℕ × X )) -> polynomial X
 
+data ℕ[X] : Set where
+  coef : List ℕ -> ℕ[X]
 
+out : ℕ[X] -> List ℕ
+out (coef xs) = xs
 
-compareIndex : {X : Set} -> (ℕ × X) -> (ℕ × X) -> Bool
-compareIndex (n₁ , x) (n₂ , y) = n₁ l n₂
+_::_ : ℕ -> ℕ[X] -> ℕ[X]
+x :: (coef p) = coef (x ∷ p)
 
-insertBy : {X : Set} -> (ℕ × X) -> List (ℕ × X) -> List (ℕ × X)
-insertBy p [] = p ∷ []
-insertBy p (y ∷ xs) with (compareIndex p y)
-...                    | true = p ∷ y ∷ xs
-...                    | false = y ∷ insertBy p xs
+-- poly add
+_+_ : ℕ[X] -> ℕ[X] -> ℕ[X]
+(coef []) + p₂ = p₂
+p₁ + (coef []) = p₁
+(coef (c₁ ∷ p₁)) + (coef (c₂ ∷ p₂)) = (c₁ +ℕ c₂) :: ((coef p₁) + (coef p₂))
 
-sort : {X : Set} -> List (ℕ × X) -> List (ℕ × X)
-sort xs = foldr insertBy [] xs
+-- scalar poly mult
+_⋆_ : ℕ -> ℕ[X] -> ℕ[X]
+n ⋆ (coef []) = coef []
+n ⋆ (coef (x ∷ xs)) = (n *ℕ x) :: (n ⋆ (coef xs))
 
-normalize : {X : Set} -> polynomial X -> polynomial X
-normalize (coef xs) = coef (sort xs)
+-- poly poly mult
+_*_ : ℕ[X] -> ℕ[X] -> ℕ[X]
+(coef xs) * (coef ys) = let result = map (λ (x : ℕ) -> out ( x ⋆ (coef ys))) xs
+                            zeroPad = inits (replicate (length result) 0)
+                            shifted = map coef (zipWith _++_ zeroPad result)
+                        in foldl _+_ (coef []) shifted
