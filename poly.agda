@@ -3,9 +3,10 @@ open import Data.List.Base using (List ; _∷_ ; [] ; foldr ; foldl ; map ; _++_
 open import Data.Product using (_×_ ; _,_)
 open import Data.Nat using (ℕ)
 open import Data.Bool using (Bool ; true ; false)
-open import Agda.Builtin.Nat renaming (_<_ to _l_ ; _+_ to _+ℕ_ ; _*_ to _*ℕ_)
+open import Agda.Builtin.Nat renaming (_<_ to _l_ ; _+_ to _+ℕ_ ; _*_ to _xℕ_)
 open import Relation.Binary.PropositionalEquality.Core
   using (_≡_; refl; sym; cong)
+open Relation.Binary.PropositionalEquality.Core.≡-Reasoning
 
 record monoid (A : Set) (_∙_ : A -> A -> A)(e : A) : Set where
   field
@@ -62,14 +63,61 @@ record semiring (A : Set)(_+_ : A -> A -> A)(_x_ : A -> A -> A)(e₊ : A)(eₓ :
   ; commutative = +ℕ-comm
   }
 
-ℕ₊-semiring : semiring ℕ _+ℕ_ _*ℕ_ 0 1
+ℕₓ-r-unit : ∀ (n : ℕ) -> n xℕ 1 ≡ n
+ℕₓ-r-unit zero = refl
+ℕₓ-r-unit (suc n) = cong suc (ℕₓ-r-unit n)
+
+lemma : ∀ (n : ℕ) -> suc (1 xℕ n) ≡ 1 xℕ (suc n)
+lemma zero = refl
+lemma (suc n) = refl
+
+ℕₓ-l-unit : ∀ (n : ℕ) -> 1 xℕ n ≡ n
+ℕₓ-l-unit zero = refl
+ℕₓ-l-unit (suc n) =
+  begin
+    1 xℕ suc n
+  ≡⟨⟩
+    (suc n) +ℕ  0 xℕ (suc n)
+  ≡⟨⟩
+    (suc n) +ℕ 0
+  ≡⟨ +ℕ-zlemma (suc n) ⟩
+    (suc n)
+  ∎
+
+xℕ-assoc : ∀ (x y z : ℕ) -> (x xℕ y) xℕ z ≡ x xℕ (y xℕ z)
+xℕ-assoc x zero z = begin
+    (x xℕ zero xℕ z)
+    ≡⟨⟩
+    {! refl  !}
+xℕ-assoc x (suc y) z = begin
+    (x xℕ (suc y)) xℕ z
+  ≡⟨⟩
+    {! relf  !}
+--    ((suc x) xℕ y) xℕ z-
+--  ≡⟨⟩
+--    (y +ℕ x xℕ y) xℕ z
+--  ≡⟨⟩
+--   {! refl  !}
+
+ℕₓ-monoid : monoid ℕ _xℕ_ 1
+ℕₓ-monoid = record
+  { assoc = {!   !}
+  ; l-unit = ℕₓ-l-unit
+  ; r-unit = ℕₓ-r-unit
+  }
+
+lemma₂ : ∀ (n : ℕ) -> n xℕ 0 ≡ 0
+lemma₂ zero = refl
+lemma₂ (suc n) = lemma₂ n
+
+ℕ₊-semiring : semiring ℕ _+ℕ_ _xℕ_ 0 1
 ℕ₊-semiring = record
   { +-comm-monoid = ℕ₊-commutative-monoid
   ; x-monoid = {!   !}
   ; l-distₓ = {!   !}
   ; r-distₓ = {!   !}
-  ; l-e₊-annihilateₓ = {!   !}
-  ; r-e₊-annihilateₓ = {!   !}
+  ; l-e₊-annihilateₓ = λ (n : ℕ) -> refl
+  ; r-e₊-annihilateₓ = λ (n : ℕ) -> lemma₂ n
   }
 -- polynomial as a list(stream?) of coefficients
 
@@ -91,7 +139,7 @@ p₁ + (coef []) = p₁
 -- scalar poly mult
 _⋆_ : ℕ -> ℕ[X] -> ℕ[X]
 n ⋆ (coef []) = coef []
-n ⋆ (coef (x ∷ xs)) = (n *ℕ x) :: (n ⋆ (coef xs))
+n ⋆ (coef (x ∷ xs)) = (n xℕ x) :: (n ⋆ (coef xs))
 
 -- poly poly mult
 _*_ : ℕ[X] -> ℕ[X] -> ℕ[X]
