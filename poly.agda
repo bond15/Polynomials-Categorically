@@ -47,6 +47,11 @@ _ : polynomial even Bool
 _ = tt , λ e -> const (fst e)
 
 
+data Unit : Set where
+  unit : Unit
+
+
+-- ∀ (p : E -> B) -> polynomial p Unit ≅ B
 
 
 
