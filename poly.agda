@@ -10,6 +10,12 @@ fiber {B} {E} f b = Σ E (λ e -> (f e ≡ b))
 polynomial : {B E : Set} -> (p : E -> B) -> Set -> Set
 polynomial {B} {E} p = λ (X : Set) -> Σ B (λ b -> fiber p b -> X)
 
+_∘_ : {X Y Z : Set} -> (f : Y -> Z) -> (g : X -> Y) -> X -> Z
+_∘_ f g x = f(g(x))
+
+polynomialFmap : {B E X Y : Set} -> (p : E -> B) -> (f : X -> Y) -> polynomial p X -> polynomial p Y
+polynomialFmap {B} p f = λ { ( b , g ) -> ( b , f ∘ g ) }
+
 -- Example
 data Bool : Set where
   tt ff : Bool
@@ -39,3 +45,14 @@ const _ = ff
 -- the second element of the pair specifies the map
 _ : polynomial even Bool
 _ = tt , λ e -> const (fst e)
+
+
+
+
+
+
+
+-- TODO develop equations for isomorphism reasoning
+
+
+--
