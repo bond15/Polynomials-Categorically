@@ -14,7 +14,7 @@ _∘_ : {X Y Z : Set} -> (f : Y -> Z) -> (g : X -> Y) -> X -> Z
 _∘_ f g x = f(g(x))
 
 polynomialFmap : {B E X Y : Set} -> (p : E -> B) -> (f : X -> Y) -> polynomial p X -> polynomial p Y
-polynomialFmap {B} p f = λ { ( b , g ) -> ( b , f ∘ g ) }
+polynomialFmap p f = λ { ( b , g ) -> ( b , f ∘ g ) }
 
 -- Example
 data Bool : Set where
