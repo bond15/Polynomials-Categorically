@@ -51,6 +51,7 @@ data Unit : Set where
   unit : Unit
 
 
+-- P(1) ≅ B  where p : E -> B is the representing map
 -- ∀ (p : E -> B) -> polynomial p Unit ≅ B
 
 
