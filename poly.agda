@@ -2,20 +2,20 @@ module poly where
 open import Agda.Builtin.Sigma
 open import Level
 open import Relation.Binary.PropositionalEquality.Core
-  using (_≡_; refl)
+  using (_≡_; refl; cong)
+open Relation.Binary.PropositionalEquality.Core.≡-Reasoning
 
-fiber : {ℓ : Level} -> (B : Set ℓ) -> (E : Set ℓ) -> (f : E -> B) -> (b : B) -> Set ℓ
-fiber X Y f b = Σ Y (λ e -> (f e ≡ b))
+fiber : {E B : Set} ->  (f : E -> B) -> (b : B) -> Set
+fiber {E} {B} f b = Σ E (λ e -> (f e ≡ b))
 
-record poly {ℓ}(E B : Set ℓ): Set (suc ℓ) where
- field
-  rep : E -> B
-  polynomial : (X : Set ℓ) -> Σ B (λ b -> fiber B E rep b -> X)
 
 -- repackage as a record?
 -- A Set polynomial represented by a Set map
--- polynomial : {B E : Set} -> (p : E -> B) -> Set -> Set
---polynomial {B} {E} p = λ (X : Set) -> Σ B (λ b -> fiber p b -> X)
+polynomial : {B E : Set} -> (p : E -> B) -> Set -> Set
+polynomial {B} {E} p = λ (X : Set) -> Σ B (λ b -> fiber p b -> X)
+
+
+
 
 _∘_ : {X Y Z : Set} -> (f : Y -> Z) -> (g : X -> Y) -> X -> Z
 _∘_ f g x = f(g(x))
@@ -27,9 +27,43 @@ polynomialFmap p f = λ { ( b , g ) -> ( b , f ∘ g ) }
 data Bool : Set where
   tt ff : Bool
 
+data Empty : Set where
+
 data ℕ : Set where
   z : ℕ
   s : ℕ -> ℕ
+
+rep : Empty -> Bool
+rep ()
+
+id : {A : Set}(a : A) -> A
+id a = a
+
+record _≅_ (A B : Set) : Set where
+  field
+    to : A -> B
+    from : B -> A
+    from∘to : from ∘ to ≡ id
+    to∘from : to ∘ from ≡ id
+
+_ : polynomial rep ℕ
+_ = tt , λ ()
+
+_ : polynomial rep ℕ
+_ = ff , λ ()
+
+-- polynomial (rep : Empty -> B) X ≅ B
+
+
+
+_ : ∀ (X B : Set) -> polynomial {B} {Empty} (λ ()) X ≅ B
+_  = λ X -> λ B -> record
+  { to = λ p -> fst p
+  ; from = λ b -> b , λ ()
+  ; from∘to = ?
+  ; to∘from = refl
+  }
+
 
 not : Bool -> Bool
 not tt = ff
