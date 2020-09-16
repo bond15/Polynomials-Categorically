@@ -53,14 +53,14 @@ _ : polynomial rep ℕ
 _ = ff , λ ()
 
 -- polynomial (rep : Empty -> B) X ≅ B
-
-
-
 _ : ∀ (X B : Set) -> polynomial {B} {Empty} (λ ()) X ≅ B
 _  = λ X -> λ B -> record
   { to = λ p -> fst p
   ; from = λ b -> b , λ ()
-  ; from∘to = ?
+  ; from∘to = begin
+      ((λ b -> b , (λ ())) ∘ fst)
+    ≡⟨⟩
+    {! (λ b -> b)  !}
   ; to∘from = refl
   }
 
