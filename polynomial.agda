@@ -45,7 +45,7 @@ _ = record
   { rep = λ { tt -> z ; ff -> (s z) }
   ; polynomial = λ X -> (s z) , {!   !}
   }
-
+Π
 data _+_ {ℓ}(A B : Set ℓ) : Set ℓ where
   inj₁ : A -> A + B
   inj₂ : B -> A + B

@@ -60,7 +60,7 @@ _  = λ X -> λ B -> record
   ; from∘to = begin
       ((λ b -> b , (λ ())) ∘ fst)
     ≡⟨⟩
-    {! (λ b -> b)  !}
+    {! ((λ b -> b) ∘ fst , (λ ()))  !}
   ; to∘from = refl
   }
 
