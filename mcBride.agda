@@ -183,8 +183,9 @@ f => g = λ x -> g (f x)
 editSequence : Tree -> Tree
 editSequence = (top => right => left => (modify λ _ -> leaf) => up => whole)
 
+-- example
 _ : Tree
-_ = editSequence result
+_ = editSequence tree
 
 
 --lefttt (node l r , c) = {!   !}
@@ -280,7 +281,9 @@ record ν (p : Poly One) : Set where
 
 
 
-
+-- how are zippers related to comonads
+-- what else can we pull from the theory of polynomial Set functors
+--   multivariate?
 
 
 --
