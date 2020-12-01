@@ -1,3 +1,4 @@
+{-# OPTIONS --type-in-type #-} -- BAD NO NO NO BAD
 module container where
 open import Level
 open import Data.Product as Prod using (Σ-syntax; _,_; _×_; proj₁; proj₂)
@@ -22,8 +23,8 @@ record Containerℓ (s p : Level) : Set (suc (s ⊔ p)) where
 record Container₁ : Set₁ where
   constructor _▷₁_
   field
-    Shape₁    : Set
-    Position₁ : Shape₁ → Set
+    Shape₁    : Set -- B
+    Position₁ : Shape₁ → Set -- E b
 
 
 record Container₂ : Set₁ where
@@ -60,7 +61,7 @@ data Two : Set where
 
 
 List : Container₁
-List = ℕ ▷₁ (λ n -> Fin n)
+List = ℕ ▷₁ (λ n -> Fin n) -- n : ℕ ▷₁ Fin n
 
 List-Two : Set
 List-Two = ⟦ List ⟧₁ Two
@@ -74,7 +75,12 @@ _ = ( 3 , λ { fzero ->  tt ;
 -- constant
 K : Set -> Container₁
 K C = C ▷₁ λ _ -> Zero
-
+-- P X = Σ [ c ∈ C ] Zero -> X   .. Zero -> X ≡ λ()
+-- Recall X⁰ = 1
+-- P X ̄ = Σ [ c ∈ C ] 1
+-- which is basically
+-- P X = C
+-- See ⟦KC⟧X≃C
 
 _ : ⟦ K Two ⟧₁ One
 _ = tt , λ ()
@@ -82,11 +88,16 @@ _ = tt , λ ()
 _ : ⟦ K Two ⟧₁ One
 _ = ff , λ ()
 
-One-c : Container₁
-One-c = One ▷₁ λ _ -> One
+Id : Container₁
+Id = One ▷₁ λ _ -> One
+-- P X = Σ [ c ∈ C ] E b -> X
+-- P X = Σ [ e ∈ 1] 1 -> X
+-- P X = 1 -> X     recall X¹ = X
+-- P X = X
+-- see ⟦Id⟧X≃X
 
 
-_ : ⟦ One-c ⟧₁ Two
+_ : ⟦ Id ⟧₁ Two
 _ = <> , λ <> -> ff
 
 infix 0 _≃_
@@ -109,27 +120,48 @@ _ = record {
 absurd : {X : Set} -> Zero -> X
 absurd ()
 
-_ : (One × absurd) ≡ (One × absurd)
-_ = ?
+--_ : (One × absurd) ≡ (One × absurd)
+--_ = ?
 
 
 ⟦KC⟧X≃C : {C X : Set}-> ⟦ K C ⟧₁ X ≃ C
 ⟦KC⟧X≃C {C}{X}= record {
      to = proj₁
    ; from = λ c -> c , absurd
-   ; from∘to = λ { (c , abs) -> cong proj₁ {!   !} }
+   ; from∘to = λ { (c , abs) -> {!   !} } --cong proj₁ {!   !} }
    ; to∘from = λ b -> refl
   }
 
 
 
-⟦One-c⟧X≃X : {X : Set} -> ⟦ One-c ⟧₁ X ≃ X
-⟦One-c⟧X≃X = record {
+⟦Id⟧X≃X : {X : Set} -> ⟦ Id ⟧₁ X ≃ X
+⟦Id⟧X≃X = record {
       to = λ p -> (proj₂ p) <>
     ; from = λ x -> <> , λ <> -> x
     ; from∘to = λ ( unit , f) -> refl
     ; to∘from = λ b -> refl
   }
+
+data _+_ (A B : Set) : Set where
+  inj₁ : A -> A + B
+  inj₂ : B -> A + B
+
+-- Operations on Polynomial Functors, I mean containers..
+
+_x_ : Container₁ -> Container₁ -> Container₁
+(S ▷₁ P) x (T ▷₁ Q) = (S × T) ▷₁ (λ p -> P (proj₁ p) + Q (proj₂ p) )
+
+
+_⊹_ : Container₁ -> Container₁ -> Container₁
+(S ▷₁ P) ⊹ (T ▷₁ Q) = (S + T) ▷₁ λ { (inj₁ s) -> P s
+                                   ; (inj₂ t) -> Q t }
+
+_⇒_ : Set -> Container₁ -> Container₁
+C ⇒ ( S ▷₁ P) = (C -> S) ▷₁ λ f -> Σ[ c ∈ C ] (P (f c))
+
+
+
+
 
 
 -- --
