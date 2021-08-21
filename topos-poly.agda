@@ -1,7 +1,9 @@
 {-# OPTIONS --type-in-type #-}
 module topos-poly where
 
+open import Data.List
 open import Data.Product
+open import Data.Nat
 open import Data.Sum.Base using (_⊎_; inj₁ ; inj₂)
 open import Data.Fin.Base using (Fin ; suc; zero ; fromℕ)
 open import Relation.Binary.PropositionalEquality using (_≡_;refl;cong;cong₂;cong-app)
@@ -30,12 +32,27 @@ postulate
 _ : Fin 3
 _ = fromℕ 2
 
+
+record Poly' (X : Set) : Set where
+
 record Poly : Set where
+  constructor _▹_
   field
     pos : Set
     dir : pos -> Set
-
 open Poly
+
+-- see container.agda
+
+-- The semantics ("extension") of a container.
+
+-- P X = Σ (b ∈ B) (E b -> X) = Σ B (λ b → E b → X)
+-- in the other representation the underlying map induced a polynomial
+-- p : E -> B is the representing map where E b denotes the fiber p⁻¹(b)
+--  so E = Σ (b ∈ B) E b
+
+⦅_⦆ : Poly → Set → Set
+⦅ P ▹ D ⦆ X = Σ[ p ∈ P ] (D p → X)
 
 {-
 Poly' : Set
@@ -44,9 +61,6 @@ Poly' = Σ Set (λ x -> Set)
 _ : Poly'
 _ = Fin 4 , {!   !}
 -}
-
-
-
 -- y² + 2y + 1
 ex : Poly
 ex = record { pos = Fin 4 ; dir = λ { zero → Fin 0 
@@ -77,8 +91,11 @@ record Polyₓ (p q : Poly) : Set where
         posₓ : pos p × pos q
         dirₓ : (pq : pos p × pos q) → (dir p) (fst pq) ⊎ (dir q) (snd pq) 
 
-lemma-xₚ-polyₓ : {p q : Poly}
+
 {-
+lemma-xₚ-polyₓ : {p q : Poly} → (p ×ₚ q) → Polyₓ p q
+lemma-×ₚ-polyₓ = ?
+
 Poly[_,_] : Poly → Poly → Set
 Poly[ p , q ] = ∀ (i : pos p) → Σ (pos q) (λ (j : pos q) → ((dir q)j → (dir p)i))
 -}
@@ -116,11 +133,41 @@ data Pos₄ : Set where
 pp : Poly -- y² + 1
 pp = record { pos = Pos₂ ; dir = λ{ P₁ → Dir₂
                                  ; P₂ → Dir₀ }}
+
+-- evaluating PP ℕ = ℕ² + 1 =  ℕ × ℕ + 1
+-- so choose a pair 
+_ : ⦅ pp ⦆ ℕ
+_ = P₁ , λ{ D₁ → 4
+          ; D₂ → 7 }
+-- or chose none!          
+_ : ⦅ pp ⦆ ℕ
+_ = P₂ , λ ()
+
+data Foo : Set where
+    Bar Baz : Foo
+
+-- enumerate all elements of ⦅ pp ⦆ Foo
+-- ≅ Option (Foo × Foo)
+_ : List (⦅ pp ⦆ Foo)
+_ = (P₁ , (λ { D₁ → Bar
+            ; D₂ → Bar })) ∷ 
+    (P₁ , (λ{ D₁ → Bar
+            ; D₂ → Baz }))  ∷  
+    (P₁ , (λ{ D₁ → Baz
+            ; D₂ → Bar })) ∷ 
+    (P₁ , (λ{ D₁ → Baz
+            ; D₂ → Baz })) ∷ 
+    (P₂ , λ()) ∷ []        
+
+
 qq : Poly -- y² + 2y + 1
 qq = record { pos = Pos₄ ; dir = λ{ P₁ → Dir₂
                                   ; P₂ → Dir₁
                                   ; P₃ → Dir₁
                                   ; P₄ → Dir₀ } }
+
+_ : ⦅ qq ⦆ ℕ
+_ = P₂ , λ{ D₁ → 7 }                                 
 
 -- poly morphism from y² + 1 to y² + 2y + 1 (or y² + y + y + 1)
 _ : Poly[ pp , qq ]
@@ -146,7 +193,7 @@ _ = record { onPos = λ{ P₁ → P₂
                       ; P₂ → λ{ D₁ →  {! !} }}} -- not possible to map from 1 direction to 0 directions!
 
 
-𝕐 : Poly -- 1y¹
+𝕐 : Poly -- 1y¹ = y
 𝕐 = record { pos = Pos₁ ; dir = λ x → Dir₁ }
 
 _∘ₚ_ : {p q r : Poly} → Poly[ p , q ] → Poly[ q , r ] → Poly[ p , r ]
@@ -207,3 +254,87 @@ _ = (P₂ , P₃) , inj₁ D₁
 
 _ : elem xxyy
 _ = (P₁ , P₃) , inj₁ D₂
+
+_ : ⦅ xxyy ⦆ ℕ
+_ = (P₁ , P₂) , λ{ (inj₁ D₁) → 1
+                 ; (inj₁ D₂) → 2
+                 ; (inj₁ D₃) → 3
+                 ; (inj₂ D₁) → 4
+                 ; (inj₂ D₂) → 5 }
+
+
+_ : (X Y : Set) → Poly 
+_ = λ X Y → (X → Y) ▹ λ f → {!   !}
+
+lift : {X Y : Set} → (p : Poly) → (X → Y) → (⦅ p ⦆ X → ⦅ p ⦆ Y)
+lift p f = λ{ (fst₁ , snd₁) → fst₁ , snd₁ ؛ f}
+-- Poly should also act on Functions from Set to Set
+f : Foo → ℕ
+f = λ{ Bar → 1
+     ; Baz → 7 }
+
+lf : ⦅ xx ⦆ Foo → ⦅ xx ⦆ ℕ
+lf = lift xx f
+
+xxfoo : ⦅ xx ⦆ Foo
+xxfoo = P₁ , λ{ D₁ → Bar
+              ; D₂ → Baz
+              ; D₃ → Bar }
+
+xxℕ : ⦅ xx ⦆ ℕ
+xxℕ = P₁ , λ{ D₁ → 1
+            ; D₂ → 7
+            ; D₃ → 1 }
+
+exx : ⦅ xx ⦆ ℕ 
+exx = lf xxfoo
+
+_ : exx ≡ xxℕ
+_ = {!   !}
+{-}
+_ : ⦅ Poly[ pp , qq ] ⦆ (Foo → ℕ)
+_ = P₁ , λ{ D₁ → f
+          ; D₂ → f}
+          -}
+
+_ : {I : Set} → (I ≈ Σ I (λ _ → Unit))
+_ = record { to = λ i → i , unit ; from = λ iu  → proj₁ iu ; from∘to = λ i → refl ; to∘from = λ{ (i , unit) → refl}}
+
+
+_ : Poly ≈ Σ[ i ∈ Set ] ( i → Set)
+_ = record { to = λ { (pos₁ ▹ dir₁) → pos₁ , dir₁} ; from = λ{ (fst₁ , snd₁) → fst₁ ▹ snd₁ }; from∘to = λ { (pos₁ ▹ dir₁) → refl }; to∘from = λ { (fst₁ , snd₁) → refl } }
+
+
+-- recall qq =  y² + 2y + 1
+_ : ⦅ qq ⦆ Unit
+_ = P₁ , λ { D₁ → unit
+           ; D₂ → unit }
+-- P := Σ I (λ i → Set)
+-- I ≈ ⦅ p ⦆ 1
+_ : {p : Poly} → (pos p) ≈ ⦅ p ⦆ Unit -- the indexing set is isomorphic to the polynomial evaluated at 1, ex  p(y) = 2y² + 3y + 1  and p(1) = 2 + 3 + 1 = 7 
+_ = record { to = λ posp → posp , λ _ → unit ; from = λ{ (fst₁ , snd₁) → fst₁ }; from∘to = λ posp → refl ; to∘from = λ{ (fst₁ , snd₁) → {!!} }}
+
+data Zero : Set where
+
+-- P(0) yields only the constants 
+_ : ⦅ qq ⦆ Zero
+_ = P₄ , λ ()
+-- Syˢ → Tyᵗ
+
+
+yˢ : (S : Set) → Poly
+yˢ S = Unit ▹ λ _ → S
+--2.3.2
+
+yoneda : {S : Set} → {q : Poly} → Poly[ yˢ S , q ] ≈ ⦅ q ⦆ S
+yoneda =  record { to = λ{ record { onPos = onPos ; onDir = onDir } → onPos unit , λ x → onDir unit x } 
+                    ; from = λ { (fst₁ , snd₁) → record { onPos = λ _ → fst₁ ; onDir = λ i → snd₁ } } 
+                    ; from∘to = λ{ record { onPos = onPos ; onDir = onDir } → {! refl  !} } 
+                    ; to∘from = λ { (fst₁ , snd₁) → refl } }
+
+
+Lens : Set → Set → Set
+Lens S T = Σ S (λ _ → S) → Σ T (λ _ → T)
+
+_ : Lens ℕ Foo
+_ = λ{ (fst₁ , snd₁) → {!   !} , {!   !} }
