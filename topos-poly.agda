@@ -182,8 +182,8 @@ _ = record { onPos = λ{ P₁ → P₁
 _؛_ : {A B C : Set} → (A → B) → (B → C) → (A → C)
 f ؛ g = λ x → g(f x)
 
-_∘_ : {A B C : Set} → (B → C) → (A → B) → (A → C)
-g ∘ f = λ x → g(f x)
+_o_ : {A B C : Set} → (B → C) → (A → B) → (A → C)
+g o f = λ x → g(f x)
 
 -- another poly morphism from y² + 1 to y² + 2y + 1
 _ : Poly[ pp , qq ]
@@ -198,7 +198,7 @@ _ = record { onPos = λ{ P₁ → P₂
 
 _∘ₚ_ : {p q r : Poly} → Poly[ p , q ] → Poly[ q , r ] → Poly[ p , r ]
 pq ∘ₚ qr = record { onPos = (onPos pq) ؛ (onPos qr) -- forward composition on positions
-                  ; onDir = λ i → ((onDir pq) i) ∘ ((onDir qr) ((onPos pq) i)) } -- backward composition on directions
+                  ; onDir = λ i → ((onDir pq) i) o ((onDir qr) ((onPos pq) i)) } -- backward composition on directions
 
 
 data Unit : Set where
@@ -333,8 +333,57 @@ yoneda =  record { to = λ{ record { onPos = onPos ; onDir = onDir } → onPos u
                     ; to∘from = λ { (fst₁ , snd₁) → refl } }
 
 
-Lens : Set → Set → Set
-Lens S T = Σ S (λ _ → S) → Σ T (λ _ → T)
+-- 2.3.3
+    -- Lenses are morphisms between monomials
+--data Lens a b s t = Lens { view :: s -> a, update :: (b ,s) -> t}
+Lens : Set → Set → Set → Set → Set
+Lens S T A B = Poly[ S ▹ (λ _ →  T) , A ▹ (λ _ → B) ]
+{-
+p1 :: Lens a b (a,c) (b,c)
+p1 = Lens view update where
+    view (x,y) = x
+    update (x', (x,y)) = (x',y)
 
-_ : Lens ℕ Foo
-_ = λ{ (fst₁ , snd₁) → {!   !} , {!   !} }
+-}
+_ : {A B C : Set} → Lens (A × C) (B × C) A B
+_ =  record { 
+            onPos = λ { (a , c) → a };  -- view
+            onDir = λ { (a , c) → λ b → b , c }  --update
+            }
+
+
+-- monomails and Lense form the category of bimorphic lenses!
+-- https://arxiv.org/abs/1808.05545
+
+
+REL : Set -> Set  -> Set 
+REL A B = A -> B -> Set 
+
+Rel :  Set -> Set 
+Rel A  = REL A A 
+
+record Category : Set where
+  field
+    Ob : Set 
+    _⇒_ : Rel Ob 
+    _∘_  : ∀ {x y z : Ob} -> y ⇒ z -> x ⇒ y -> x ⇒ z
+    id : ∀ {o : Ob} -> o ⇒ o
+    idˡ : ∀ {x y : Ob} (f : x ⇒ y) -> f ∘ (id {x}) ≡ f
+    idʳ : ∀ {x y : Ob} (f : x ⇒ y) -> (id {y}) ∘ f ≡ f
+    ∘-assoc : ∀ {x y z w : Ob} (f : x ⇒ y) (g : y ⇒ z) (h : z ⇒ w) -> h ∘ (g ∘ f) ≡ (h ∘ g) ∘ f
+
+Lens∘ : { S T A B C D : Set } → Lens S T A B → Lens A B C D → Lens S T C D
+Lens∘ p q = p ∘ₚ q
+
+Bimorphic : Category
+Bimorphic = record
+                { Ob = Set × Set
+                ; _⇒_ = λ { (S , T) → λ { (A , B) → Lens S T A B} }
+                ; _∘_ = λ { record { onPos = onPos ; onDir = onDir }  -- just _∘ₚ_ ....
+                      → λ { record { onPos = onPos' ; onDir = onDir' } 
+                      → record { onPos = λ x₁ → onPos (onPos' x₁)  ; onDir = λ i z → onDir' i (onDir (onPos' i) z) } } }
+                ; id = record { onPos = λ z → z ; onDir = λ i z → z }
+                ; idˡ = λ f₁ → refl
+                ; idʳ = λ f₁ → refl
+                ; ∘-assoc = λ f₁ g h → refl
+                }
