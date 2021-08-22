@@ -66,10 +66,16 @@ plens =  record {
 Lens∘ : { S T A B C D : Set } → Lens S T A B → Lens A B C D → Lens S T C D
 Lens∘ p q = p ∘ₚ q
 
+
+
+record _≋L_ {S T A B : Set} (f g : Lens S T A B) : Set where
+    -- placeholder
+
 Bimorphic : Category
 Bimorphic = record
                 { Ob = Set × Set
                 ; _⇒_ = λ { (S , T) → λ { (A , B) → Lens S T A B} }
+                ; _≋_ = _≋L_
                 ; _∘_ = λ  p q → q ∘ₚ p -- composition of polynomails (applied here to the specific case of monomials or Lenses)
                 ; id = record { onPos = λ z → z ; onDir = λ i z → z }
                 ; idˡ = λ f₁ → refl
