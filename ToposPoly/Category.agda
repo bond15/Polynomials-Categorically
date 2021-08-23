@@ -1,4 +1,6 @@
 {-# OPTIONS --type-in-type #-}
+{-# OPTIONS --allow-unsolved-metas #-}
+
 module Category where 
 open import Base
 import Relation.Binary.PropositionalEquality as Eq
@@ -35,7 +37,6 @@ record Functor (𝒞 𝒟 : Category) : Set where
         identity : ∀ {A} -> (F₁ (C.id {A})) ≡ D.id {(F₀ A)}
         homomorphism : ∀ {A B C} -> (f : C._⇒_ A B) -> (g : C._⇒_ B C) ->
             F₁ (C._∘_ g f) ≡ D._∘_ (F₁ g) (F₁ f)
-
 
 Agda : Category
 Agda = record
@@ -111,8 +112,6 @@ record NatTrans {C D : Category } (ℱ 𝒢 : Functor C D) : Set where
     field
         η : ∀ X → F.F₀ X ⇒D G.F₀ X
         commute : ∀ {X Y}(f : X ⇒C Y) → ((η Y) ∘D (F₁ f)) ≋D (((G.F₁ f) ∘D η X))
-        --commute : ∀ {X Y}(f : X ⇒C Y) → ((η Y) ∘D (F₁ f)) ≋D (((G.F₁ f) ∘D η X))
-
 
 -- natural transformations are polynomial functions
 fun : {X : Set} → Option X → List X
@@ -123,8 +122,131 @@ open Category
 open Functor
 open NatTrans
 
-_ : NatTrans  OptFun ListFun
+_ : NatTrans OptFun ListFun
 _ = record { 
     η = λ X → fun ;
     commute = λ { f None → refl
                 ; f (Some x) → refl } }
+
+
+{-
+Category : Agda
+
+Objects: Sets
+Morphisms: Functions
+
+Polynomial Functor
+
+    P ≡ Σ Set (λ S → S → Set)
+
+-}
+open import Data.Product
+{- Poly' : Set
+Poly' =  Σ[ S ∈ Set ] (S → Set)
+
+P : Set → Set
+P X = Σ[ S ∈ Set ] (S → Set → X)
+
+lift : {A B : Set} → (f : A → B) → P A → P B
+lift f = λ {(pos , dira) → pos , λ pose set → f (dira pose pos)}
+-}
+
+-- 2.3.2 & 2.3.4
+open import Poly
+open Poly[_,_] 
+
+-- This shows that Poly represents a polynomial functor (but note Poly is a Set!)
+PFun : Poly → Functor Agda Agda -- application of yoneda?
+PFun p = record { 
+    F₀ = ⦅ p ⦆ ; 
+    F₁ = lift p ; 
+    identity = refl ; 
+    homomorphism = λ f g → refl }
+{-
+need the "yoneda ed" form of this 
+Poly[_,_] 
+morphisms between poly 
+
+This represents that Poly[_,_] (which is a map/function between Poly) represents a Natural transformation of polynomial functors
+-}
+PNat : {p q : Poly } → Poly[ p , q ] → NatTrans (PFun p) (PFun q)
+PNat (onPos ⇒ₚ onDir) = record { 
+                            η = λ ob → λ{ (posp , dirp) → onPos posp , λ z → dirp (onDir posp z) } ; 
+                            commute = λ {f (fst , snd) → refl }
+                            }
+
+
+-- Apply this yonedaificaton to Option : Functor Agda Agda and List : Functor Agda Agda
+
+-- show that Option as a Functor Agda Agda is isomorphic to ⦅ Option' ⦆ as a Poly
+Option' : Poly
+Option' = Pos₂ ▹ λ { P₁ → Dir₁
+                   ; P₂ → Dir₀ }
+open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; step-≡; _∎)
+
+
+lemma-dumber : (x : Dir₁) → x ≡ D₁
+lemma-dumber D₁ = refl
+
+lemma-dumb : { X : Set } → ( f : Dir₁ → X)  → (λ d1 → f D₁) ≡ f
+lemma-dumb f = begin   (λ d1 → f D₁) ≡⟨⟩ extensionality λ{ D₁ → refl }
+
+open import Agda.Builtin.Sigma
+_ : {X : Set} → ⦅ Option' ⦆ X ≈ Option X
+_ = record { 
+    to = λ{ (P₁ , snd) → Some (snd D₁)
+          ; (P₂ , snd) → None } ;
+    from = λ {None → P₂ , λ()
+            ; (Some x) → P₁ , λ d1 → x} ; 
+    from∘to = {!   !} ;
+    {-begin (λ { None → P₂ , (λ ()) ; (Some x) → P₁ , (λ _ → x) })
+    ((λ { (P₁ , snd) → Some (snd D₁) ; (P₂ , snd) → None }) (P₁ , snd))
+                            ≡⟨⟩ (λ { None → P₂ , (λ ()) ; (Some x) → P₁ , (λ _ → x) }) Some (snd D₁) 
+                            ≡⟨⟩ P₁ , (λ d1 → (snd D₁)) 
+                            ≡⟨ {! cong₂ _,_ ? ?   !} ⟩ P₁ , snd --(λ {D₁  → (snd D₁)})  
+                            ≡⟨⟩ refl
+               ; (P₂ , snd) → {!  !}} ; -} 
+    to∘from = λ {None → refl
+               ; (Some x) → refl }}
+{-
+open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; step-≡; _∎)
+-- need isomorphism reasoning
+_ : PFun Option' ≡ OptFun
+_ = begin PFun Option' 
+        ≡⟨⟩ record { 
+                    F₀ = ⦅ Option' ⦆ ; 
+                    F₁ = lift Option' ; 
+                    identity = refl ; 
+                    homomorphism = λ f g → refl }
+        ≡⟨⟩ {!   !}
+-} 
+
+
+FunctorCat : Category
+FunctorCat = record
+                { Ob = Functor Agda Agda
+                ; _⇒_ = λ F G → NatTrans F G
+                ; _≋_ = λ N₁ N₂ → N₁ ≡ N₂
+                ; _∘_ = {!   !}
+                ; id = {!   !}
+                ; idˡ = {!   !}
+                ; idʳ = {!   !}
+                ; ∘-assoc = {!   !}
+                }
+
+PolyCat : Category
+PolyCat = record
+        { Ob = Poly
+        ; _⇒_ = Poly[_,_]
+        ; _≋_ = λ p p' → p ≡ p'
+        ; _∘_ = λ p q → q ∘ₚ p
+        ; id = (λ z → z) ⇒ₚ λ i z → z
+        ; idˡ = λ {(onPos₁ ⇒ₚ onDir₁) → refl}
+        ; idʳ = λ { (onPos₁ ⇒ₚ onDir₁) → refl }
+        ; ∘-assoc = λ f g h → refl
+        }
+
+-- Could show that PolyCat is a subcategory of FunctorCat
+
+
+

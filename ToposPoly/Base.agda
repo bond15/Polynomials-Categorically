@@ -30,9 +30,6 @@ data Unit : Set where
 eq-Σ : { I X : Set} → (e1 e2 : Σ I (λ _ → X )) → fst e1 ≡ fst e2 →  snd e1 ≡ snd e2 → e1 ≡ e2 
 eq-Σ (i,f) (i',f') ieq feq = cong₂ _,_ ieq feq
 
-
-
-
 -- Axiom
 postulate
   extensionality : ∀ {A B : Set }{f g : A -> B}

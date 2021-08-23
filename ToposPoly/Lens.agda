@@ -1,4 +1,5 @@
 {-# OPTIONS --type-in-type #-}
+{-# OPTIONS --allow-unsolved-metas #-}
 module Lens where
 
 open import Agda.Builtin.Sigma
@@ -67,9 +68,10 @@ Lens∘ : { S T A B C D : Set } → Lens S T A B → Lens A B C D → Lens S T C
 Lens∘ p q = p ∘ₚ q
 
 
-
 record _≋L_ {S T A B : Set} (f g : Lens S T A B) : Set where
-    -- placeholder
+    field
+        eq-pos : onPos f ≡ onPos g
+        eq-dir : onDir f ≡ onDir g
 
 Bimorphic : Category
 Bimorphic = record

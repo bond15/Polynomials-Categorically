@@ -38,7 +38,10 @@ p ⊎ₚ q = record { pos = pos p ⊎ pos q ; dir = λ { (inj₁ x) → (dir p) 
 _×ₚ_ : Poly → Poly → Poly
 p ×ₚ q = record { pos = pos p × pos q ; dir = λ {(i , j) → (dir p) i ⊎ (dir q) j} }
 
-
+--tensor \ox
+-- Ayᴮ × Cyᴰ = ACyᴮᴰ
+_⊗_ : Poly → Poly → Poly
+p ⊗ q = record { pos = pos p × pos q ; dir = λ {(i , j) → (dir p) i × (dir q) j} }
 
 record Polyₓ (p q : Poly) : Set where
     field
@@ -47,6 +50,7 @@ record Polyₓ (p q : Poly) : Set where
 
 
 record Poly[_,_](p q : Poly) : Set where
+    constructor _⇒ₚ_
     field
         onPos : pos p → pos q
         onDir : (i : pos p) → dir q (onPos i) → dir p i
@@ -63,7 +67,7 @@ Poly[] p q = ∀ (i : pos p) → Σ (pos q) (λ (j : pos q) → ∀ (d : dir q j
 lemma-poly[]-iso : {p q : Poly} → Poly[] p q ≈ Poly[ p , q ]
 lemma-poly[]-iso {p} {q} = record { to = λ p[] → record { onPos = λ ppos → fst( p[] ppos) ; onDir = λ ppos x → fst(snd(p[] ppos) x) } 
                         ; from = λ poly[p,q] ppos → (onPos poly[p,q]) ppos , λ d → (onDir poly[p,q]) ppos d , unit 
-                        ; from∘to = λ poly[]pq → Extensionality λ x → {!  !}
+                        ; from∘to = λ poly[]pq → Extensionality λ x → {! ? !}
                         ; to∘from = λ poly[p,q] → refl }
 
 elem : Poly → Set

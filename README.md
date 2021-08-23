@@ -1,0 +1,1 @@
+https://people.inf.elte.hu/divip/AgdaTutorial/Symbols.html
