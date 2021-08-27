@@ -1,5 +1,6 @@
 {-# OPTIONS --copatterns #-}
 {-# OPTIONS --guardedness #-}
+{-# OPTIONS --type-in-type #-}
 module Dynamics where
 
 open import Data.Product
@@ -122,8 +123,8 @@ open import Data.Integer
 
 -- Turing machine as a LensS
 
-data V : Set where
-    One Zero Empty : V
+data Var : Set where
+    One Zero Empty : Var
 
 data HeadDir : Set where
     L R : HeadDir 
@@ -133,7 +134,7 @@ data HeadDir : Set where
 -- V -- output
 
 TuringMachine : Set
-TuringMachine = Lens ((ℤ → V) × ℤ) ((ℤ → V) × ℤ) V ( V × HeadDir)
+TuringMachine = Lens ((ℤ → Var) × ℤ) ((ℤ → Var) × ℤ) Var ( Var × HeadDir)
 
 eqℕ : ℕ → ℕ → Bool
 eqℕ zero zero = tt
@@ -157,3 +158,98 @@ f [ x ⇒ v ] = λ x' → if eqℤ x x' then v else f x'
 _ : TuringMachine
 _ = (λ {(tape , head) → tape(head)}) ⇒ₚ λ{ (tape , head) ( v , L) → (tape [ head ⇒ v ]) , head - (+_ 1)
                                          ; (tape , head) ( v , R) → (tape [ head ⇒ v ]) , Data.Integer._+_ head (+_ 1) }
+
+
+{- Dependent Dynamical Systems
+
+    So far we have only looked at systems where the "interface" is a monomial Byᴬ 
+    Syˢ → Byᴬ
+
+    
+-}
+open Poly.Poly
+open import Data.Sum.Base
+
+-- Syˢ → ℕy^ℕ + Booly^Bool
+Ex : Set → Set
+Ex S = Poly[ S ▹ (λ _ → S) , (ℕ ▹ λ _ → ℕ) ⊎ₚ (Bool ▹ λ _ → Bool) ]
+
+{-
+ P₁ 7
+ P₂ True
+ p₃ 14
+ p₄ False
+
+-}
+-- states can read off different types
+-- states can transition on different types
+_ : Ex Pos₄ 
+_ = (λ {P₁ → inj₁ 7
+      ; P₂ → inj₂ tt
+      ; P₃ → inj₁ 14
+      ; P₄ → inj₂ ff}) ⇒ₚ λ { P₁ → λ n → P₂
+                            ; P₂ → λ b → P₃
+                            ; P₃ → λ n → P₄
+                            ; P₄ → λ b → P₁}
+
+-- Haulting deterministic state automata
+data Nada : Set where
+-- Syˢ → yᴬ + 1
+HDSA : Set → Set → Set
+HDSA S A = Poly[ S ▹ (λ _ → S) , (Unit ▹ λ _ → A) ⊎ₚ (Unit ▹ λ _ → Nada) ]                         
+
+
+-- P₁ -tt-> P₂ -ff-> P₃
+-- p₄ is trash state
+-- accept the language ttff(ttff)*
+-- NOPE
+-- this representation doesn't follow the language acceptance model...
+-- an accept state does not terminate.. you only terminate once input has been exhausted..
+_ : HDSA Pos₄ Bool
+_ = (λ {P₁ → inj₁ unit
+      ; P₂ → inj₁ unit
+      ; P₃ → inj₂ unit
+      ; P₄ → inj₁ unit }) ⇒ₚ λ{ P₁ → λ{ tt → P₂
+                                      ; ff → P₄ }
+                             ; P₂ → λ {tt → P₄
+                                     ; ff → P₃}
+                             ; P₃ → λ () -- problem.. this haults the machine.. there could be more input
+                             ; P₄ → λ _ → P₄}
+
+record Graph : Set where
+    field
+        V : Set
+        E : Set
+        source : E → V
+        target : E → V
+open Graph
+-- graph representing the above state machine
+graph : Graph
+graph = record { 
+    V = Pos₄ ;
+    E = Pos₄ × Bool ;
+    source = λ{(p , b) → p} ;
+    target = λ{(P₁ , tt) → P₂
+             ; (P₁ , ff) → P₄
+             ; (P₂ , tt) → P₄
+             ; (P₂ , ff) → P₃
+             ; (P₃ , b) → P₃
+             ; (P₄ , b) → P₄ } 
+    }
+
+fiber : {E B : Set} -> (f : E -> B) -> (b : B) -> Set
+fiber {E} {B} f b = Σ E (λ e -> (f e ≡ b))
+
+G : Graph → Poly
+G g = V g ▹ λ v → fiber (source g) v
+
+ex : Graph → Set
+ex g = Poly[ V g ▹ (λ _ → V g) , G g ]
+
+_ : ex graph
+_ = (λ v → v) ⇒ₚ λ { _ (e , _) → target graph e}
+
+
+
+
+
