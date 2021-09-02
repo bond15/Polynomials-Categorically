@@ -40,8 +40,8 @@ p ×ₚ q = record { pos = pos p × pos q ; dir = λ {(i , j) → (dir p) i ⊎ 
 
 --tensor \ox
 -- Ayᴮ × Cyᴰ = ACyᴮᴰ
-_⊗_ : Poly → Poly → Poly
-p ⊗ q = record { pos = pos p × pos q ; dir = λ {(i , j) → (dir p) i × (dir q) j} }
+_⊗ₚ_ : Poly → Poly → Poly
+p ⊗ₚ q = record { pos = pos p × pos q ; dir = λ {(i , j) → (dir p) i × (dir q) j} }
 
 record Polyₓ (p q : Poly) : Set where
     field

@@ -250,6 +250,197 @@ _ : ex graph
 _ = (λ v → v) ⇒ₚ λ { _ (e , _) → target graph e}
 
 
+-- Example 3.32
+module Ex_3,32 where
+{-
+    record Sys (S : Set) : Set where
+        constructor Syˢ⇒_
+        field
+            interface : Poly
+    open Sys
+
+    _×ₛ_ : {S : Set} → Sys S → Sys S → Sys S
+    (Syˢ⇒ p) ×ₛ (Syˢ⇒ q) = Syˢ⇒ (p ×ₚ q)
+
+    ⦅_⦆ₛ : {S : Set} → Sys S → Set
+    ⦅_⦆ₛ {S} (Syˢ⇒ p) = Poly[ S ▹ (λ _ → S) , p ]
+-}
+    record Sys(S : Set)(p : Poly): Set where
+        constructor Syˢ⇒_
+        field
+            system : Poly[ S ▹ (λ _ → S) , p ]
+    open Sys
+
+    open Poly[_,_]
+    _×ₛ_ : {S : Set}{p q : Poly} → Sys S p → Sys S q → Sys S (p ×ₚ q)
+    (Syˢ⇒ p) ×ₛ (Syˢ⇒ q) = Syˢ⇒ ((λ s → onPos p s , onPos q s) ⇒ₚ λ {i (inj₁ x) → onDir p i x
+                                                                   ; i (inj₂ y) → onDir q i y})
+
+    data RB : Set where
+        red blue : RB
+
+    data GP : Set where
+        green purple : GP
+
+    data Gr : Set where
+        green : Gr
+    
+    data A : Set where
+        A₁ A₂ A₃ A₄ : A
+    
+    data B : Set where
+        B₁ B₂ B₃  B₄ : B
 
 
 
+{-
+    p1   p2
+    
+    p3   p4
+-}
+    I₁ : Poly
+    I₁ = A ▹ (λ _ → RB)
+
+    ϕ : Sys Pos₄ I₁
+    ϕ = Syˢ⇒ ((λ{ P₁ → A₁
+                ; P₂ → A₂
+                ; P₃ → A₃
+                ; P₄ → A₄ }) ⇒ₚ λ{ P₁ red → P₂
+                                 ; P₁ blue → P₁
+                                 ; P₂ red → P₁
+                                 ; P₂ blue → P₄
+                                 ; P₃ red → P₁
+                                 ; P₃ blue → P₄
+                                 ; P₄ red → P₃
+                                 ; P₄ blue → P₄} )
+{-
+    p1  p2
+
+    p3  p4
+
+-}
+    I₂ : Poly
+    I₂ = (B ▹ (λ _ → GP)) ⊎ₚ (B ▹ (λ _ → Gr)) 
+
+    ψ : Sys Pos₄ I₂
+    ψ = Syˢ⇒ ((λ{ P₁ → inj₂ B₁
+                ; P₂ → inj₁ B₂
+                ; P₃ → inj₂ B₃
+                ; P₄ → inj₁ B₄}) ⇒ₚ λ{ P₁ green → P₃
+                                     ; P₂ green → P₁
+                                     ; P₂ purple → P₄
+                                     ; P₃ green → P₃
+                                     ; P₄ green → P₁
+                                     ; P₄ purple → P₃})
+
+    {-
+        syˢ → Ay^RB
+        syˢ → By^GP + By^Gr
+
+        to
+
+        syˢ → (Ay^RB) × (By^GP + By^Gr)
+
+        recall
+
+        Ayᴮ × Cyᴰ = ACyᴮ⁺ᴰ
+
+        so 
+
+        syˢ → A(B+B)y^(RB + (GP + Gr ))
+    -}
+
+    exx : Sys Pos₄ (I₁ ×ₚ I₂)
+    exx = ϕ ×ₛ ψ
+
+    getp : {p q : Poly} → Poly[ p , q ] → Poly
+    getp {p} {q} = λ _ → q
+
+    geti : {S : Set} {p : Poly} → Sys S p → Poly
+    geti = λ { (Syˢ⇒ system₁) → getp system₁ }
+
+    _ : {O S : Set} → {I : O → Set} → (sys : Sys S (O ▹ (λ x → I x)) ) → Poly
+    _ = geti
+
+    -- observe a trace of this system
+    --SysTrace : {O S : Set} → {I : O → Set} → {o : O} → (sys : Sys S (O ▹ (λ x → I x)) ) → ∀(s : S) →  Stream (I {! dir (geti sys) o !}) → Stream (I o × S × O)
+   -- hd (SysTrace (Syˢ⇒ p) s is ) = hd is , s , onPos p s
+    --tl (SysTrace (Syˢ⇒ p) s is ) = SysTrace (Syˢ⇒ p) (onDir p s (hd {! is   !})) (tl is)
+
+    -- observe the output of the new system 
+    -- the states are the same
+    -- both outputs respect the original systems' outputs on state P₁
+    _ : onPos (system exx) P₁ ≡ (A₁ , inj₂ B₁)
+    _ = refl
+
+    -- observe that transitions respect the original system
+    _ : onDir (system exx) P₁ (inj₁ red) ≡ P₂
+    _ = refl
+    _ : onDir (system exx) P₁ (inj₁ blue) ≡ P₁
+    _ = refl
+    _ : onDir (system exx) P₁ (inj₂ green) ≡ P₃
+    _ = refl
+    -- no purple arrows going out of state P₁
+    
+    _ : I₁ ×ₚ I₂ ≡ ( (A × (B ⊎ B)) ▹ λ{ (a , bub) → dir I₁ a ⊎ dir I₂ bub })
+    _ = refl
+
+    _ : Sys Pos₄ (( (A × (B ⊎ B)) ▹ λ{ (a , bub) → dir I₁ a ⊎ dir I₂ bub }))
+    _ = exx
+
+
+
+    -- Parallel Product of systems
+    -- note states need not be the same 
+
+    _⊗ₛ_ : {S₁ S₂ : Set} {p q : Poly} → Sys S₁ p → Sys S₂ q → Sys (S₁ × S₂) (p ⊗ₚ q) 
+    sys₁ ⊗ₛ sys₂ = Syˢ⇒ ((λ {(s₁ , s₂) → onPos (system sys₁) s₁ , onPos (system sys₂) s₂}) ⇒ₚ λ { (s₁ , s₂) (o₁ , o₂) → onDir (system sys₁) s₁ o₁ , onDir (system sys₂) s₂ o₂})
+
+    -- example 3.35
+
+    data RO : Set where
+        red orange : RO
+    data Bl : Set where
+        blue : Bl
+    data Red : Set where
+        red : Red
+    data Or : Set where
+        orange : Or
+    
+    open import Data.String
+
+    I₃ : Poly
+    I₃ = (String ▹ λ _ → Bl) ⊎ₚ (String ▹ λ _ → RB)
+
+    I₄ : Poly
+    I₄ = ((String ▹ λ _ → Red) ⊎ₚ (String ▹ λ _ → RO)) ⊎ₚ (String ▹ λ _ → Or)
+
+    ϕ₂ : Sys Pos₂ I₃
+    ϕ₂ = Syˢ⇒ ((λ { P₁ → inj₁ "sqrt(7)"
+                  ; P₂ → inj₂ "-e" }) ⇒ₚ λ {P₁ blue → P₂
+                                          ; P₂ red → P₁
+                                          ; P₂ blue → P₂})
+
+    ψ₂ : Sys Pos₃ I₄
+    ψ₂ = Syˢ⇒ ((λ {P₁ → inj₁ (inj₁  "-5")
+                 ; P₂ → inj₁  (inj₂ "0")
+                 ; P₃ → inj₂ "8"}) ⇒ₚ λ { P₁ red → P₂
+                                        ; P₂ red → P₃
+                                        ; P₂ orange → P₁
+                                        ; P₃ orange → P₃})
+
+
+    -- observe their parallel product
+    ex₂ : Sys (Pos₂ × Pos₃) (I₃ ⊗ₚ I₄)
+    ex₂ = ϕ₂ ⊗ₛ ψ₂
+
+    -- top left corner state
+    _ : onPos (system ex₂) (P₁ , P₁) ≡ (inj₁ "sqrt(7)" , inj₁ (inj₁ "-5"))
+    _ = refl
+
+    -- bimap?
+    _ : onDir (system ex₂ ) (P₁ , P₁) (blue , red) ≡ (P₂ , P₂)
+    _ = refl
+    
+    _ : onDir (system ex₂) (P₂ , P₃) (blue , orange) ≡ (P₂ , P₃)
+    _ = refl
