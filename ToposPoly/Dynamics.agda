@@ -444,3 +444,77 @@ module Ex_3,32 where
     
     _ : onDir (system ex₂) (P₂ , P₃) (blue , orange) ≡ (P₂ , P₃)
     _ = refl
+
+
+    -- Wrapper Interfaces
+
+    _∘ₛ_ : {S : Set} {p q : Poly} → Sys S p → Poly[ p , q ] → Sys S q
+    (Syˢ⇒ f) ∘ₛ g = Syˢ⇒ (f ∘ₚ g)
+
+    data BYR : Set where
+        blue yellow red : BYR
+    -- example 3.38
+    I₅ : Poly
+    I₅ =  (String ▹ (λ _ → BYR)) ⊎ₚ  ((String ▹ (λ _ → RB)) ⊎ₚ  ((String ▹ λ _ → Bl) ⊎ₚ  (String ▹ λ _ → Red))) 
+
+    data Pos₆ : Set where
+        P₁ P₂ P₃ P₄ P₅ P₆ : Pos₆
+
+
+    -- p1 p2 p3
+    ---p4 p5 p6
+    ϕ₃ : Sys Pos₆ I₅ 
+    ϕ₃ = Syˢ⇒ ((λ {P₁ → inj₁ "1"
+                 ; P₂ → inj₂ (inj₁  "2")
+                 ; P₃ → inj₂ (inj₂ (inj₁ "3"))
+                 ; P₄ → inj₂ (inj₂  (inj₂ "4"))
+                 ; P₅ → inj₁ "1" -- ?????
+                 ; P₆ → inj₂ (inj₂  (inj₂ "4"))}) ⇒ₚ λ{ P₁ blue → P₂
+                                          ; P₁ yellow → P₅
+                                          ; P₁ red → P₄
+                                          ; P₂ red → P₅
+                                          ; P₂ blue → P₂
+                                          ; P₃ blue → P₂
+                                          ; P₄ red → P₄
+                                          ; P₅ blue → P₄
+                                          ; P₅ yellow → P₂
+                                          ; P₅ red → P₆
+                                          ; P₆ red → P₃})
+    data GPO : Set where
+        green purple orange : GPO
+
+    data None : Set where
+
+    qpoly : Poly
+    qpoly = (String ▹ (λ _ → GPO))  ⊎ₚ ((String ▹ (λ _ → GP))  ⊎ₚ (String ▹ (λ _ → None )))
+
+    f : Poly[ I₅ , qpoly ]
+    f = (λ {(inj₁ x) → inj₂ (inj₁ "b") -- 1 to b
+          ; (inj₂ (inj₁ x)) → inj₂ (inj₂  "c") -- 2 to c
+          ; (inj₂ (inj₂ (inj₁ x))) → inj₂ (inj₁ "b") -- 3 to b
+          ; (inj₂ (inj₂ (inj₂ y))) → inj₁ "a"}) -- 4 to a
+            ⇒ₚ λ {(inj₁ x₁) green → red -- arrows b to 1
+                ; (inj₁ x₁) purple → yellow
+                ; (inj₂ (inj₂ (inj₁ x₁))) green → blue -- arrows b to 3
+                ; (inj₂ (inj₂ (inj₁ x₁))) purple → blue
+                ; (inj₂ (inj₂ (inj₂ y))) green → red -- arrows a to 4
+                ; (inj₂ (inj₂ (inj₂ y))) purple → red
+                ; (inj₂ (inj₂ (inj₂ y))) orange → red} 
+
+    -- wrapper example
+    ν : Sys Pos₆ qpoly
+    ν = ϕ₃ ∘ₛ f
+
+    -- Think. re-lable the output states, then re map directions
+
+    _ : onPos (system ν) P₁  ≡ inj₂ (inj₁ "b")
+    _ = refl
+
+    _ : onDir (system ν) P₁ purple ≡ P₅
+    _ = refl
+    _ : onDir (system ν) P₁ green ≡ P₄
+    _ = refl
+
+    _ : None → Pos₆
+    _ = onDir (system ν) P₂
+
