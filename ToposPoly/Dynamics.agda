@@ -118,7 +118,7 @@ _ : stake m₁trace 7 ≡ stake m₂trace 7
 _ = refl
 
 
-open import Data.Integer
+open import Data.Integer hiding (_+_)
 
 
 -- Turing machine as a LensS
@@ -205,8 +205,8 @@ HDSA S A = Poly[ S ▹ (λ _ → S) , (Unit ▹ λ _ → A) ⊎ₚ (Unit ▹ λ 
 -- NOPE
 -- this representation doesn't follow the language acceptance model...
 -- an accept state does not terminate.. you only terminate once input has been exhausted..
-_ : HDSA Pos₄ Bool
-_ = (λ {P₁ → inj₁ unit
+tfsys : HDSA Pos₄ Bool
+tfsys = (λ {P₁ → inj₁ unit
       ; P₂ → inj₁ unit
       ; P₃ → inj₂ unit
       ; P₄ → inj₁ unit }) ⇒ₚ λ{ P₁ → λ{ tt → P₂
@@ -224,8 +224,8 @@ record Graph : Set where
         target : E → V
 open Graph
 -- graph representing the above state machine
-graph : Graph
-graph = record { 
+tfsys_graph : Graph
+tfsys_graph = record { 
     V = Pos₄ ;
     E = Pos₄ × Bool ;
     source = λ{(p , b) → p} ;
@@ -240,18 +240,12 @@ graph = record {
 fiber : {E B : Set} -> (f : E -> B) -> (b : B) -> Set
 fiber {E} {B} f b = Σ E (λ e -> (f e ≡ b))
 
-G : Graph → Poly
-G g = V g ▹ λ v → fiber (source g) v
-
-ex : Graph → Set
-ex g = Poly[ V g ▹ (λ _ → V g) , G g ]
-
-_ : ex graph
-_ = (λ v → v) ⇒ₚ λ { _ (e , _) → target graph e}
+Gₚ : Graph → Poly
+Gₚ g = V g ▹ λ v → fiber (source g) v
 
 
 -- Example 3.32
-module Ex_3,32 where
+module Systems where
 {-
     record Sys (S : Set) : Set where
         constructor Syˢ⇒_
@@ -265,13 +259,21 @@ module Ex_3,32 where
     ⦅_⦆ₛ : {S : Set} → Sys S → Set
     ⦅_⦆ₛ {S} (Syˢ⇒ p) = Poly[ S ▹ (λ _ → S) , p ]
 -}
+    open Poly[_,_]
+
     record Sys(S : Set)(p : Poly): Set where
         constructor Syˢ⇒_
         field
             system : Poly[ S ▹ (λ _ → S) , p ]
     open Sys
+    
+    GSyˢ : (g : Graph) → Sys (V g) (Gₚ g)
+    GSyˢ graph = Syˢ⇒ ((λ v → v) ⇒ₚ λ { _ ( e , _) → target graph e})
 
-    open Poly[_,_]
+    _ : (onDir (system (GSyˢ tfsys_graph))) P₂ ((P₂ , ff) , refl) ≡ P₃
+    _ = refl
+
+
     _×ₛ_ : {S : Set}{p q : Poly} → Sys S p → Sys S q → Sys S (p ×ₚ q)
     (Syˢ⇒ p) ×ₛ (Syˢ⇒ q) = Syˢ⇒ ((λ s → onPos p s , onPos q s) ⇒ₚ λ {i (inj₁ x) → onDir p i x
                                                                    ; i (inj₂ y) → onDir q i y})
@@ -285,11 +287,11 @@ module Ex_3,32 where
     data Gr : Set where
         green : Gr
     
-    data A : Set where
-        A₁ A₂ A₃ A₄ : A
+    data Aₜ : Set where
+        A₁ A₂ A₃ A₄ : Aₜ
     
-    data B : Set where
-        B₁ B₂ B₃  B₄ : B
+    data Bₜ : Set where
+        B₁ B₂ B₃  B₄ : Bₜ
 
 
 
@@ -299,7 +301,7 @@ module Ex_3,32 where
     p3   p4
 -}
     I₁ : Poly
-    I₁ = A ▹ (λ _ → RB)
+    I₁ = Aₜ ▹ (λ _ → RB)
 
     ϕ : Sys Pos₄ I₁
     ϕ = Syˢ⇒ ((λ{ P₁ → A₁
@@ -320,7 +322,7 @@ module Ex_3,32 where
 
 -}
     I₂ : Poly
-    I₂ = (B ▹ (λ _ → GP)) ⊎ₚ (B ▹ (λ _ → Gr)) 
+    I₂ = (Bₜ ▹ (λ _ → GP)) ⊎ₚ (Bₜ ▹ (λ _ → Gr)) 
 
     ψ : Sys Pos₄ I₂
     ψ = Syˢ⇒ ((λ{ P₁ → inj₂ B₁
@@ -382,10 +384,10 @@ module Ex_3,32 where
     _ = refl
     -- no purple arrows going out of state P₁
     
-    _ : I₁ ×ₚ I₂ ≡ ( (A × (B ⊎ B)) ▹ λ{ (a , bub) → dir I₁ a ⊎ dir I₂ bub })
+    _ : I₁ ×ₚ I₂ ≡ ( (Aₜ × (Bₜ ⊎ Bₜ)) ▹ λ{ (a , bub) → dir I₁ a ⊎ dir I₂ bub })
     _ = refl
 
-    _ : Sys Pos₄ (( (A × (B ⊎ B)) ▹ λ{ (a , bub) → dir I₁ a ⊎ dir I₂ bub }))
+    _ : Sys Pos₄ (( (Aₜ × (Bₜ ⊎ Bₜ)) ▹ λ{ (a , bub) → dir I₁ a ⊎ dir I₂ bub }))
     _ = exx
 
 
@@ -449,7 +451,7 @@ module Ex_3,32 where
     -- Wrapper Interfaces
 
     _∘ₛ_ : {S : Set} {p q : Poly} → Sys S p → Poly[ p , q ] → Sys S q
-    (Syˢ⇒ f) ∘ₛ g = Syˢ⇒ (f ∘ₚ g)
+    (Syˢ⇒ f) ∘ₛ g = Syˢ⇒ (f ⇒∘ₚ g)
 
     data BYR : Set where
         blue yellow red : BYR
@@ -518,3 +520,274 @@ module Ex_3,32 where
     _ : None → Pos₆
     _ = onDir (system ν) P₂
 
+
+    -- Add a pause button to a dynamical system
+    -- Syˢ → By^A  ==>   Syˢ → By^(A+1)
+    -- Byᴬ xₚ y  ==> By^(A+1)
+    -- \Mcy
+    addPause : ∀ {S : Set}{p : Poly} → Sys S p → Sys S (p ×ₚ 𝓎)
+    addPause {S} {p} (Syˢ⇒ (onP ⇒ₚ onD)) = Syˢ⇒ ((λ s → onP s , unit) ⇒ₚ λ{ s (inj₁ x) → onD s x
+                                                                          ; s (inj₂ unit) → s })
+
+    -- alternatively
+    pauseSyˢ : ∀ {S : Set} → Sys S 𝓎
+    pauseSyˢ = Syˢ⇒ ((λ _ → unit) ⇒ₚ λ s unit → s)       
+
+    addPause' : ∀ {S : Set}{p : Poly} → Sys S p → Sys S (p ×ₚ 𝓎)
+    addPause' sys = sys ×ₛ pauseSyˢ                                                            
+
+
+module WiringDiagrams where
+    open Systems
+
+    postulate A B C D S T : Set
+
+    -- component boxes
+    -- By^(AC)
+    -- and
+    -- CDy^B
+    p : Poly
+    p = B ▹ λ _ → A × C
+    
+    q : Poly
+    q = (C × D) ▹ λ _ → B
+
+    -- encapsulating box
+    -- Dy^A
+    r : Poly
+    r = D ▹ λ _ → A
+
+    -- select the component boxes
+    p⊗q : Poly
+    p⊗q = p ⊗ₚ q 
+
+    -- define a wrapper interface from the inner box to the encapsulating box
+    box :  Poly[ p⊗q , r ]
+    box = (λ{ (b , c , d) → d}) -- outputs of separate boxes → output of enclosing box
+        ⇒ₚ λ{ (b , c , _) a → (a , c) , b} -- input of enclosing box `a`, feed `b` and `c` back in
+
+
+    -- "fill in the system"
+
+    postulate part₁ : Sys S p -- assume an implementation of a system for p box
+    postulate part₂ : Sys T q -- assume an implementation of a system for q box
+
+    parts : Sys (S × T) (p ⊗ₚ q ) -- tensor the implementations together
+    parts = part₁ ⊗ₛ part₂        -- they are in parallel and they do not interact
+
+    -- "derives" an implementation of the encapsulating system
+    -- given
+    -- * implementations for the sub components
+    -- * a formula for tying the boxes together
+    newSys : Sys (S × T) r 
+    newSys = parts ∘ₛ box
+
+    open Systems
+    open Sys
+    open Poly[_,_]
+    postulate s : S
+    postulate t : T
+    postulate d : D
+    postulate a : A
+    postulate n : None
+    exfalso : {A : Set} → None → A
+    exfalso()
+
+    -- this shows that output of the new system is D
+    _ : onPos (system newSys) (s , t) ≡ d
+    _ = exfalso n
+
+    -- this shows that input of the new system is A
+    _ : onDir (system newSys) (s , t) a ≡ (s , t)
+    _ = exfalso n
+
+module testing where
+
+
+module WiringDiagramsConcrete where
+    open Systems
+    open Sys
+    open Poly[_,_]
+
+    xorTy : Poly
+    xorTy = Bool ▹ λ _ → Bool × Bool
+    
+    dupTy : Poly
+    dupTy = (Bool × Bool) ▹ λ _ → Bool
+
+    circuit : Poly
+    circuit = (Bool ▹ λ _ → Bool)
+
+    ten : Poly
+    ten = xorTy ⊗ₚ dupTy
+
+    box :  Poly[ ten , circuit ]
+    box = (λ{ (b , c , d) → d}) 
+        ⇒ₚ λ{ (b , c , _) a → (a , c) , b}
+
+
+    xor : Sys Bool xorTy
+    xor = Syˢ⇒ ((λ x → x) ⇒ₚ λ{ _ (tt , tt) → ff
+                                ; _ (tt , ff) → tt
+                                ; _ (ff , tt) → tt
+                                ; _ (ff , ff) → ff })
+
+    dup : Sys (Bool × Bool) dupTy
+    dup = Syˢ⇒ ((λ x → x) ⇒ₚ λ _ x → (x , x))
+
+    parts : Sys (Bool × Bool × Bool) (xorTy ⊗ₚ dupTy)
+    parts = xor ⊗ₛ dup   
+
+    fun :  Sys (Bool × Bool × Bool) circuit
+    fun = parts ∘ₛ box 
+
+    -- So by wrapping the circuit in box, the interface changed from
+    -- Bool × Bool × Bool as input to Bool × Unit as input
+    -- The abstraction is a bit leaky and not a full black box as 
+    -- the State is accumulated when components are tensored and 
+    -- the state is not hidden from the boxed interface..
+    _ : onPos (system fun) (tt , (tt , tt))  ≡ tt
+    _ = refl
+
+
+-- page 89
+module EnclosureInterface where
+    open Systems
+    open import Data.Nat using (_+_)
+    open Poly[_,_]
+    open Systems.Sys
+
+    closeSys : {S : Set} {p : Poly} → Sys S p → Poly[ p , 𝓎 ] → Sys S 𝓎
+    closeSys = _∘ₛ_ 
+
+    -- example system 
+    -- state , ℕ 
+    -- input : ℕ
+    -- output : Bool
+    -- Description: takes an input n : ℕ  and outputs if n + s is even or odd
+    I : Poly
+    I = Bool ▹ (λ _ → ℕ)
+
+    even : ℕ → Bool
+    even zero = tt
+    even (suc zero) = ff
+    even (suc (suc n)) = even n
+
+    -- view : ℕ → Bool
+    -- update : ℕ × ℕ → ℕ
+    evenSys : Sys ℕ I 
+    evenSys = Syˢ⇒ ( even  ⇒ₚ _+_ )
+
+    _ : onPos (system evenSys) 7 ≡ ff
+    _ = refl
+
+    _ : onDir (system evenSys) 3 7 ≡ 10
+    _ = refl
+
+    closed : Sys ℕ 𝓎  -- have to select a (next?)state? (here 7). is it always in that state?
+    closed = closeSys evenSys ((λ (_ : Bool) → unit) ⇒ₚ λ (_ : Bool) unit → 7)
+
+    -- the close machine can only ever read out `unit`
+    _ : ∀ {n : ℕ} → onPos (system closed) n ≡ unit
+    _ = refl
+
+    -- the close machine can only ever take in 'unit'
+    _ : ∀ {n : ℕ} → onDir (system closed) n unit ≡ n + 7
+    _ = refl
+
+    -- It seems like this freezes the system in time?
+    -- It is odd that this hides the inputs and outputs.. but the internal state is still exposed..?
+
+module BitAnd where
+    open Systems
+    open Poly[_,_]
+    open Systems.Sys
+     --  Idea, take 4 independent one bit ands and yield a new and
+
+    -- these are stateless so.. Unit? 
+    -- no... we need to use the state to hold the output? wtf
+
+    data 4Word : Set where
+        word : Bool × Bool × Bool × Bool → 4Word
+
+    andBitI : Poly
+    andBitI = Bool ▹ λ _ → Bool × Bool
+
+    _&_ : Bool → Bool → Bool
+    tt & tt = tt
+    _ & _ = ff
+
+    _||_ : Bool → Bool → Bool
+    ff || ff = ff
+    _ || _ = tt
+
+    --_&&_ : 4Word → 4Word → 4Word
+    --word (b₁ , b₂ , b₃ , b₄) && word (b₅ , b₆ , b₇ , b₈) = word ((b₁ & b₅) , ((b₂ & b₆) , ((b₃ & b₇) , (b₄ & b₈))))
+
+    bitAnder : Sys Bool andBitI
+    bitAnder = Syˢ⇒ ((λ (b : Bool) → b) ⇒ₚ λ { _ (b₁ , b₂) → b₁ & b₂})
+
+    glue : Sys (Bool × Bool × Bool × Bool) (andBitI ⊗ₚ (andBitI ⊗ₚ (andBitI ⊗ₚ andBitI)) )
+    glue = bitAnder ⊗ₛ (bitAnder ⊗ₛ (bitAnder ⊗ₛ bitAnder))
+
+    4I : Poly
+    4I = 4Word ▹ (λ _ → 4Word × 4Word) 
+
+    box : Poly[ (andBitI ⊗ₚ (andBitI ⊗ₚ (andBitI ⊗ₚ andBitI)) ) , 4I ]
+    box = word ⇒ₚ (λ{ _ (word (b₁ , b₂ , b₃ , b₄) , word (b₅ , b₆ , b₇ , b₈)) → (b₁ , b₅) , (b₂ , b₆) , (b₃ , b₇) , b₄ , b₈})
+
+    wordAnd : Sys (Bool × Bool × Bool × Bool) 4I
+    wordAnd = glue ∘ₛ box
+
+    _ : onPos (system wordAnd) (tt , (ff , (tt , ff))) ≡ word (tt , (ff , (tt , ff)))
+    _ = refl
+
+    _ : {i : Bool × Bool × Bool × Bool} → onDir (system wordAnd) i ((word ((tt , (ff , (tt , ff))))) , (word ((ff , (tt , (ff , tt)))))) ≡ (ff , ff , (ff , ff))
+    _ = refl
+
+    _ : {i : Bool × Bool × Bool × Bool} → 
+                onPos (system wordAnd) 
+                    (onDir (system wordAnd) i 
+                        ((word ((tt , (ff , (tt , ff))))) , 
+                         (word ((ff , (tt , (ff , tt))))))) ≡ word (ff , ff , (ff , ff))
+    _ = refl
+
+    compute : {i : Bool × Bool × Bool × Bool} → 4Word → 4Word → 4Word
+    compute {i} x y = onPos (system wordAnd) (onDir (system wordAnd) i (x , y))
+
+
+    five : 4Word
+    five = word (ff , (tt , (ff , tt)))
+
+    four : 4Word
+    four = word (ff , (tt , (ff , ff)))
+
+    _ : {i : Bool × Bool × Bool × Bool} → compute {i} five four ≡ four
+    _ = refl
+
+    -- We can reuse these definitions and just swap out the implementation of the parts
+    2bitOp : Poly
+    2bitOp = Bool ▹ λ _ → Bool × Bool
+
+    4wordOp : Poly
+    4wordOp = 4Word ▹ (λ _ → 4Word × 4Word)
+
+    liftOp : (Bool → Bool → Bool) → Sys Bool 2bitOp
+    liftOp f = Syˢ⇒ ((λ (b : Bool) → b) ⇒ₚ λ { _ (b₁ , b₂) → f b₁ b₂ })
+
+    bitsToWord : Poly[ (2bitOp ⊗ₚ (2bitOp ⊗ₚ (2bitOp ⊗ₚ 2bitOp)) ) , 4wordOp ]
+    bitsToWord = word ⇒ₚ 
+                (λ{ _ (word (b₁ , b₂ , b₃ , b₄) , 
+                       word (b₅ , b₆ , b₇ , b₈)) 
+                        → (b₁ , b₅) , (b₂ , b₆) , (b₃ , b₇) , b₄ , b₈})
+
+    wordSys : (op : Sys Bool 2bitOp) → Sys (Bool × Bool × Bool × Bool) 4wordOp
+    wordSys op = (op ⊗ₛ (op ⊗ₛ (op ⊗ₛ op))) ∘ₛ bitsToWord
+
+ 
+    OrWord : Sys (Bool × Bool × Bool × Bool) 4wordOp
+    OrWord = wordSys (liftOp _||_)
+
+    AndWord : Sys (Bool × Bool × Bool × Bool) 4wordOp
+    AndWord = wordSys (liftOp _&_ )
+    

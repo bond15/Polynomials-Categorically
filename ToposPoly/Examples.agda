@@ -209,6 +209,77 @@ _ = P₄ , λ ()
 
 
 
+module CompositionExample where
+    -- y² + 1 
+    p : Poly
+    p = Pos₂ ▹ λ{ P₁ → Dir₂
+                ; P₂ → Dir₀}
 
+    -- 2y³
+    q : Poly
+    q =  Pos₂ ▹ λ{ P₁ → Dir₃
+                 ; P₂ → Dir₃}
+
+    -- (y² + 1) ∘ₚ 2y³ = (2y³)² + 1 = 4y⁶ + 1 = y⁶ + y⁶ + y⁶ + y⁶ + 1
+    -- Draw the corrolla forrest for this example
+    p∘q : Poly
+    p∘q = p ∘ₚ q
+
+    -- for positions, you have to choose an element of i : (pos p) or i : Pos₂
+    -- AND also a function from (dir p) i → (pos q), a map from DIRECTIONS of a p point i TO POINTS of q
+    -- glue a point from q to the tip of an arrow of a point in p
+
+    -- the first selection is the p point, i
+    -- the second selection is the gluing map from arrows of i to points of q
+    -- the third selection is which i arrow to choose
+    -- the fourth selection is which arrow to choose from the point
+
+    -- select a position in p, i
+    -- select a map from directions of position i to positions in q
+    -- select an i arrow
+    -- select an i q arrow
+    _ : elem p∘q
+    _ = (P₁ , λ{ D₁ → P₁
+                  ; D₂ → P₁}) , D₁ , D₂
+
+    _ : elem p∘q
+    _ = (P₁ , λ{ D₁ → P₁
+                  ; D₂ → P₁}) , D₁ , D₁
+
+    _ : elem p∘q
+    _ = (P₁ , λ{ D₁ → P₁
+                  ; D₂ → P₁}) , D₁ , D₃
+
+    _ : elem p∘q
+    _ = (P₁ , λ{ D₁ → P₁
+                  ; D₂ → P₁}) , D₂ , D₁
+
+    _ : elem p∘q
+    _ = (P₁ , λ{ D₁ → P₁
+                  ; D₂ → P₁}) , D₂ , D₃
+    
+    _ : elem p∘q
+    _ = (P₁ , λ{ D₁ → P₁
+                  ; D₂ → P₁}) , D₂ , D₃
+
+    _ : elem p∘q
+    _ = (P₂ , λ()) , {!   !} , {!   !}
+
+module CompositionExample2 where
+    -- xx = y³ + 1
+    -- yy = y⁴ + y² + 1
+
+    yy∘xx : Poly
+    yy∘xx = yy ∘ₚ xx
+
+    _ : elem yy∘xx
+    _ = (P₁ , -- selecting y⁴
+        (λ{ D₁ → P₁ -- y³
+          ; D₂ → P₁ -- y³
+          ; D₃ → P₁ -- y³
+          ; D₄ → P₁})) -- y³
+        -- P₁ and this map yield y¹²
+            , (D₁  -- 4 options
+            , D₁)  -- 3 options
 
 

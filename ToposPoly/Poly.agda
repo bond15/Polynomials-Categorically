@@ -29,6 +29,7 @@ open Poly
 ⦅_⦆ : Poly → Set → Set
 ⦅ P ▹ D ⦆ X = Σ[ p ∈ P ] (D p → X)
 
+-- the 4 monoidal structures on Poly
 
 _⊎ₚ_ : Poly → Poly → Poly
 p ⊎ₚ q = record { pos = pos p ⊎ pos q ; dir = λ { (inj₁ x) → (dir p) x
@@ -42,6 +43,16 @@ p ×ₚ q = record { pos = pos p × pos q ; dir = λ {(i , j) → (dir p) i ⊎ 
 -- Ayᴮ × Cyᴰ = ACyᴮᴰ
 _⊗ₚ_ : Poly → Poly → Poly
 p ⊗ₚ q = record { pos = pos p × pos q ; dir = λ {(i , j) → (dir p) i × (dir q) j} }
+-- show these are all monoidal structures on poly
+
+-- _∘ₚ_ actuall composition of Polys
+-- really a substitution operation... 
+
+-- show that this is an example of composition of datatypes!
+
+_∘ₚ_ : Poly → Poly → Poly
+(p⑴ ▹ p[_] ) ∘ₚ (q⑴ ▹ q[_]) = (Σ[ i ∈ p⑴ ] (p[ i ] → q⑴)) ▹ λ{ ( i , ĵ) → Σ[ d ∈ p[ i ] ]  q[ (ĵ d) ]}
+
 
 record Polyₓ (p q : Poly) : Set where
     field
@@ -56,8 +67,9 @@ record Poly[_,_](p q : Poly) : Set where
         onDir : (i : pos p) → dir q (onPos i) → dir p i
 open Poly[_,_]
 
-_∘ₚ_ : {p q r : Poly} → Poly[ p , q ] → Poly[ q , r ] → Poly[ p , r ]
-pq ∘ₚ qr = record { onPos = (onPos pq) ؛ (onPos qr) -- forward composition on positions
+-- RENAME 
+_⇒∘ₚ_ : {p q r : Poly} → Poly[ p , q ] → Poly[ q , r ] → Poly[ p , r ]
+pq ⇒∘ₚ qr = record { onPos = (onPos pq) ؛ (onPos qr) -- forward composition on positions
                   ; onDir = λ i → ((onDir pq) i) o ((onDir qr) ((onPos pq) i)) } -- backward composition on directions
 
 Poly[] : Poly → Poly → Set
@@ -79,6 +91,9 @@ lift p f = λ{ (fst₁ , snd₁) → fst₁ , snd₁ ؛ f}
 
 yˢ : (S : Set) → Poly
 yˢ S = Unit ▹ λ _ → S
+
+𝓎 : Poly
+𝓎 = Unit ▹ (λ _ → Unit)
 
 yoneda : {S : Set} → {q : Poly} → Poly[ yˢ S , q ] ≈ ⦅ q ⦆ S
 yoneda =  record { to = λ{ record { onPos = onPos ; onDir = onDir } → onPos unit , λ x → onDir unit x } 
