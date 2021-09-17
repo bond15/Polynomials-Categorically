@@ -8,3 +8,7 @@ https://github.com/agda/agda-categories
 
 Agda unicode input
 https://people.inf.elte.hu/divip/AgdaTutorial/Symbols.html
+
+
+TODO:
+- Can quantum circuits be expressed using Poly?
