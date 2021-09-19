@@ -248,5 +248,24 @@ PolyCat = record
 
 -- Could show that PolyCat is a subcategory of FunctorCat
 
+-- Comonoids in (Poly,𝓎,◃) are catefories??
+module ComonoidsAreCategories where
 
+    record MonoidalCategory(C : Category) : Set where
+        field
+            I : Ob C
+            _⨂_ : Ob C → Ob C → Ob C
+            -- laws
+    open MonoidalCategory
+
+    record comonoid{C : Category}(M : MonoidalCategory C): Set where
+        field
+            m : Ob C
+         --   ε : m → I
+
+    record comonoidPoly : Set where
+        m : Poly
+        m = Set ▹ λ x → {!   !}
+        
+            
 
