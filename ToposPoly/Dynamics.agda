@@ -266,6 +266,12 @@ module Systems where
         field
             system : Poly[ S ▹ (λ _ → S) , p ]
     open Sys
+
+    read : {p : Poly} → Poly[ 𝓎 , p ] → pos p
+    read (onPos₁ ⇒ₚ onDir₁) = onPos₁ unit
+
+    next : {!  {p : Poly} → Poly[ 𝓎 , p ] !}
+    next = {!   !}
     
     GSyˢ : (g : Graph) → Sys (V g) (Gₚ g)
     GSyˢ graph = Syˢ⇒ ((λ v → v) ⇒ₚ λ { _ ( e , _) → target graph e})
@@ -790,4 +796,42 @@ module BitAnd where
 
     AndWord : Sys (Bool × Bool × Bool × Bool) 4wordOp
     AndWord = wordSys (liftOp _&_ )
-    
+
+
+
+    extract : {S : Set} {p : Poly} → (sys : Sys S p) → (s : S) → Poly[ 𝓎 , p ]
+    extract {S} sys s = ((λ{ unit → s}) ⇒ₚ λ{ unit x → unit}) ⇒∘ₚ system sys
+
+    foo : Poly[ 𝓎 , 4wordOp ]
+    foo = extract AndWord (tt , tt , tt , tt)
+
+    _ : onPos foo unit ≡ word (tt , tt , tt , tt)
+    _ = refl
+
+    _ : onDir foo unit (word (ff , tt , ff , tt) , word (tt , tt , tt , tt)) ≡ unit
+    _ = refl
+
+
+module Coalgebra where
+    open Systems
+    open Sys
+    -- A system Syˢ → p is equivalently a map S → P(S)
+    -- which is suggestive of a coalgebra
+
+    _∘_ : {A B C : Set} → (B → C) → (A → B) → (A → C)
+    g ∘ f = λ x → g(f x)
+
+    _ : {S : Set}{p : Poly} → Sys S p ≈ (S → ⦅ p ⦆ S )
+    _ = record { 
+        to = λ{(Syˢ⇒ (onPos ⇒ₚ onDir)) s → (onPos s) , onDir s } ; 
+        from = λ S→P⦅s⦆ → Syˢ⇒ ((proj₁ ∘ S→P⦅s⦆) ⇒ₚ λ{s x → proj₂ (S→P⦅s⦆ s) x });
+        from∘to = λ x → refl ; 
+        to∘from = λ y → refl }
+
+    record CoAlgMap (p : Poly)(S T : Set) : Set where
+        field
+            fm : S → ⦅ p ⦆ S
+            gm : T → ⦅ p ⦆ T
+            S→T : S → T
+            -- laws
+            commute : (lift p S→T) ∘ fm ≡ gm ∘ S→T

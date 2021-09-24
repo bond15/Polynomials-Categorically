@@ -71,6 +71,17 @@ _⇒∘ₚ_ : {p q r : Poly} → Poly[ p , q ] → Poly[ q , r ] → Poly[ p , r
 pq ⇒∘ₚ qr = record { onPos = (onPos pq) ؛ (onPos qr) -- forward composition on positions
                   ; onDir = λ i → ((onDir pq) i) o ((onDir qr) ((onPos pq) i)) } -- backward composition on directions
 
+-- Chart
+-- forward on positions and forward on arrows
+--https://www.youtube.com/watch?v=FU9B-H6Tb4w&list=PLhgq-BqyZ7i6IjU82EDzCqgERKjjIPlmh&index=9
+-- found DJM's book! http://davidjaz.com/Papers/DynamicalBook.pdf
+record Chart (p q : Poly) : Set where
+    field
+        onPos : pos p → pos q
+        onDir : (i : pos p) → dir p i → dir q (onPos i)
+
+-- write out the commuting square between the 4 polys
+
 Poly[] : Poly → Poly → Set
 Poly[] p q = ∀ (i : pos p) → Σ (pos q) (λ (j : pos q) → ∀ (d : dir q j) → Σ (dir p i) λ c → Unit )
 
@@ -101,6 +112,8 @@ yoneda =  record { to = λ{ record { onPos = onPos ; onDir = onDir } → onPos u
                     ; to∘from = λ { (fst₁ , snd₁) → refl } }
 
 
+-- Set^Vars → Set
+-- or Set^I → Set
 record Polyₘ (Vars : Set) : Set where
     constructor _▹ₘ_
     field
@@ -109,6 +122,21 @@ record Polyₘ (Vars : Set) : Set where
 
 ⦅_⦆⋆_ : {Vars : Set} → Polyₘ Vars → (Vars → Set) → Set 
 (⦅_⦆⋆_) {Vars} (Pos ▹ₘ Dir) f = Σ[ p ∈ Pos ] (∀ (var : Vars) → (Dir p var → f var ))
+
+-- https://www.youtube.com/watch?v=B8STLcbEGrE&list=PLhgq-BqyZ7i7R-fGcAmNyWmJBQg1wzex-&index=1
+-- Richard Garner's talk
+-- the even more general case is 
+-- Set^I → Set^J 
+-- "A J indexed family of polynomial functors Set^I → Set"
+-- claim: this is better for composition ?
+
+-- Alternatively functors Set/I → Set/J ??
+-- slice category?
+
+-- another representation ( I've seen this before in some papers..)
+-- Set/I → Set/E → Set/B → Set/J
+
+-- Also Girard's Normal Functors?
 
 
 module ExampleMultivariate where
@@ -149,10 +177,58 @@ module ExampleMultivariate where
              ; Z D₂ → 2
              ; Z D₃ → 3}
 
+-- PolyBoxes
+module composition where
+    p : Poly  
+    p = Pos₂ ▹ (λ{P₁ → Dir₂
+                ; P₂ → Dir₁})
+
+    p' : Poly
+    p' = Pos₂ ▹ λ{P₁ → Dir₃
+                ; P₂ → Dir₁}
+
+    q : Poly
+    q = Pos₂ ▹ (λ{P₁ → Dir₂
+                ; P₂ → Dir₁})
+
+    q' : Poly
+    q' = Pos₂ ▹ (λ{P₁ → Dir₁
+                 ; P₂ → Dir₀})
+
+
+    p→p' : Poly[ p , p' ]
+    p→p' = (λ{P₁ → P₁
+            ; P₂ → P₂}) ⇒ₚ λ{P₁ D₁ → D₂
+                           ; P₁ D₂ → D₂
+                           ; P₁ D₃ → D₁
+                           ; P₂ D₁ → D₁}
+
+    q→q' : Poly[ q , q' ]
+    q→q' = (λ{P₁ → P₁
+            ; P₂ → P₂}) ⇒ₚ λ{P₁ D₁ → D₂}
+
+    _ : Poly[ p ◃ q , p' ◃ q' ]
+    _ = {!   !}
+
+    -- Sy^S is a contractible groupoid ??
+
+    _◃→_ : {p p' q q' : Poly} → (f : Poly[ p , p' ]) → (g : Poly[ q , q' ]) → Poly[ p ◃ q , p' ◃ q' ]
+    (onPos₁ ⇒ₚ onDir₁) ◃→ (onPos₂ ⇒ₚ onDir₂) = 
+            (λ{ (posp , pdirtoq) → onPos₁ posp , λ{x → onPos₂ (pdirtoq (onDir₁ posp x))}}) 
+            ⇒ₚ λ{(posp , snd₁) (fst₁ , snd₂) → (onDir₁ posp fst₁) , (onDir₂ (snd₁ (onDir₁ posp fst₁)) snd₂)}
+
+
+
+
+
+
+
+
 -- failed attempts at trying to derive multivarite polynomials
 -- multivariate polynomials?
 -- data types with more that one type variable?
 -- two variables
+{-
 module multivariate where
     ⦅_⦆[_,_] : Poly → Set → Set → (Pos₂ → Set)
     ⦅ P ▹ D ⦆[ S₁ , S₂ ] = λ{P₁ → Σ[ p ∈ P ] (D p → S₁)
@@ -274,3 +350,4 @@ module Example where
            ; P₁ (D₂ , D₁) → D₂
            ; P₁ (D₂ , D₂) → D₂
            ; P₁ (D₂ , D₃) → D₂}
+-}
