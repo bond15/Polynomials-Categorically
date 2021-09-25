@@ -811,7 +811,8 @@ module BitAnd where
     _ : onDir foo unit (word (ff , tt , ff , tt) , word (tt , tt , tt , tt)) ≡ unit
     _ = refl
 
-
+--https://www.youtube.com/watch?v=QNuGyjHJtP8&list=PLhgq-BqyZ7i6IjU82EDzCqgERKjjIPlmh&index=6
+-- day 4.5
 module Coalgebra where
     open Systems
     open Sys
@@ -821,17 +822,79 @@ module Coalgebra where
     _∘_ : {A B C : Set} → (B → C) → (A → B) → (A → C)
     g ∘ f = λ x → g(f x)
 
-    _ : {S : Set}{p : Poly} → Sys S p ≈ (S → ⦅ p ⦆ S )
-    _ = record { 
+
+    -- Sys S p : (S → O) × (S → I → S)
+    -- coalg   : S → (O × (I → S))
+    Sys-iso-coalg : {S : Set}{p : Poly} → Sys S p ≈ (S → ⦅ p ⦆ S )
+    Sys-iso-coalg = record { 
         to = λ{(Syˢ⇒ (onPos ⇒ₚ onDir)) s → (onPos s) , onDir s } ; 
-        from = λ S→P⦅s⦆ → Syˢ⇒ ((proj₁ ∘ S→P⦅s⦆) ⇒ₚ λ{s x → proj₂ (S→P⦅s⦆ s) x });
+        from = λ S→P⦅s⦆ → Syˢ⇒ ((proj₁ ∘ S→P⦅s⦆) ⇒ₚ λ{s → proj₂ (S→P⦅s⦆ s)});
         from∘to = λ x → refl ; 
         to∘from = λ y → refl }
 
-    record CoAlgMap (p : Poly)(S T : Set) : Set where
+    record F-CoAlgHomomorphism (p : Poly)(S T : Set) : Set where
         field
             fm : S → ⦅ p ⦆ S
             gm : T → ⦅ p ⦆ T
             S→T : S → T
             -- laws
             commute : (lift p S→T) ∘ fm ≡ gm ∘ S→T
+
+
+    -- map between systems
+    p : Poly
+    p = (Bool ▹ (λ _ → Unit))
+
+    -- flip flop system
+    flip : Sys Bool p
+    flip = Syˢ⇒ ((λ x → x) ⇒ₚ λ{tt unit → ff
+                              ; ff unit → tt})
+
+    even : ℕ → Bool
+    even zero = tt
+    even (suc zero) = ff
+    even (suc (suc n)) = even n
+    -- parity system
+    parity : Sys ℕ p
+    parity = Syˢ⇒ ( even ⇒ₚ λ{i _ → i + 1})
+
+    open _≈_
+
+    Sys→coalg : {S : Set}{p : Poly} → Sys S p → (S → ⦅ p ⦆ S )
+    Sys→coalg {S} {p} =  to (Sys-iso-coalg {S} {p})
+    -- parity system can be simulated by the flip flop system
+
+    _ : F-CoAlgHomomorphism p ℕ Bool
+    _ = record { 
+        fm =  Sys→coalg parity; 
+        gm = Sys→coalg flip ; 
+        S→T = even ; 
+        commute = extensionality λ{zero → {! refl  !}
+                                 ; (ℕ.suc n) → {!   !} }}
+
+
+    viewₛ : {S O I : Set} → Sys S (O ▹ (λ _ → I)) → S → O
+    viewₛ (Syˢ⇒ (onPos ⇒ₚ onDir)) = onPos 
+
+    updateₛ : {S O I : Set} → Sys S (O ▹ (λ _ → I)) → S → I → S
+    updateₛ (Syˢ⇒ (onPos ⇒ₚ onDir)) = onDir
+
+    -- seems to be easier to show a F coalgebra homomorphism, but the idea is the same
+    -- this coalgebra homomorphism can be used so show that systems are the same
+    -- (but not yet bisumulation? or are they bisimilar if theres a coalgebra homomorphism? )
+    -- could use this to decrease the state size of a system (the implementation of a box (thinking wiring diagrams))
+
+    -- wait. DJM claims that Poly has a generalized view of coalgebra homomorphims...
+    record SystemMorphism {p : Poly}{S T : Set} (f : S → T)(sys₁ : Sys S p)(sys₂ : Sys T p) : Set where
+        field
+            view-agree : (Poly[_,_].onPos (system sys₁)) ≡ ((Poly[_,_].onPos (system sys₂)) ∘ f)
+            update-agree : {!   !}
+
+    -- Use a Chart instead??
+    
+    -- TODO commuting square showing interaction between 4 Polys, charts, lenses
+    -- this is the generalization of these view-agree update-agree maps?
+
+    
+
+module LensChar where

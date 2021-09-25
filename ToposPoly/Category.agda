@@ -268,4 +268,41 @@ module ComonoidsAreCategories where
         m = Set ▹ λ x → {!   !}
         
             
+module Double where 
+    -- Double category presentation as a matrix (List of List)
+    --  
+    record DoubleCategory : Set where
+        field
+            Ob : Set 
+            _⇒ᵥ_ : Rel Ob
+            _⇒ₕ_ : Rel Ob
+        -- partial definition
+        {-square : ∀ {a b c d : Ob}
+                    (f : a ⇒ₕ b)
+                    (f': c ⇒ₕ d)
+                    (g : a ⇒ᵥ c)
+                    (g': b ⇒ᵥ d) 
+                    → {!   !} -}
 
+    -- TODO Double Category (relation to 2-Category? )
+    -- There is a way to get a Double Category from a 2-Category
+    -- let both vertical and horizonal morphisms of C be the same as the 1 morphisms in the 2 category
+
+    -- TODO Show the Double Category of Charts and Lenses
+
+
+    record Square
+            {p p' q q' : Poly} 
+            (c₁ : Chart p p')
+            (c₂ : Chart q q')
+            (l₁ : Poly[ p , q ])
+            (l₂ : Poly[ p' , q' ]): Set where
+        open Chart c₁     renaming (onPos to f ; onDir to f♭)
+        open Chart c₂     renaming (onPos to g ; onDir to g♭)
+        open Poly[_,_] l₁ renaming (onPos to w ; onDir to w♯)
+        open Poly[_,_] l₂ renaming (onPos to v ; onDir to v♯)
+        field
+        -- CURSED US OF o INSTEAD OF ∘
+            square₁ : g o w ≡ v o f 
+
+            square₂ : {!   !}
