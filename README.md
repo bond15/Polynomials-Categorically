@@ -1,6 +1,8 @@
 Attempting to formalize concepts from https://topos.site/poly-course/
 
-Some code snippits are taken from /influned by
+and also http://davidjaz.com/Papers/DynamicalBook.pdf
+
+Some code snippits are taken from /influenced by
 
 https://plfa.github.io/
 
@@ -12,3 +14,6 @@ https://people.inf.elte.hu/divip/AgdaTutorial/Symbols.html
 
 TODO:
 - Can quantum circuits be expressed using Poly?
+- mu and nu for least and greatest fixed point
+- coalgebras (and unfold) as an alternative definition for systems 
+- relation to profunctors for optics?
