@@ -290,7 +290,7 @@ module Double where
 
     -- TODO Show the Double Category of Charts and Lenses
 
-
+    open Poly.Poly
     record Square
             {p p' q q' : Poly} 
             (c₁ : Chart p p')
@@ -305,4 +305,10 @@ module Double where
         -- CURSED US OF o INSTEAD OF ∘
             square₁ : g o w ≡ v o f 
 
-            square₂ : {!   !}
+            -- this square relies on the equation in square₁
+            -- .. not sure how to express this in agda
+            -- Do I really need to break out cubical agda for this?
+            square₂ :
+             ∀ ( i : pos p)
+               ( x : dir q (w i)) 
+             → f♭ i (w♯ i x) ≡ {! v♯ (f i)  !} (g♭ (w i) x)

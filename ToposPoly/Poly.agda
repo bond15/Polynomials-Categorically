@@ -1,4 +1,5 @@
 {-# OPTIONS --type-in-type #-}
+{-# OPTIONS --without-K #-}
 {-# OPTIONS --allow-unsolved-metas #-}
 module Poly where 
 
