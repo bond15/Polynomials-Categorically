@@ -113,6 +113,12 @@ yoneda =  record { to = λ{ record { onPos = onPos ; onDir = onDir } → onPos u
                     ; to∘from = λ { (fst₁ , snd₁) → refl } }
 
 
+-- Day 5 (Closures)
+-- Poly(p ⊗ q , r) ≈ Poly (p , [q , r])
+-- Poly(p × q , r) ≈ Poly (p , qʳ)
+-- where [q , r] and qʳ are not defined here yet
+
+
 -- Set^Vars → Set
 -- or Set^I → Set
 record Polyₘ (Vars : Set) : Set where
@@ -212,12 +218,17 @@ module composition where
     _ = {!   !}
 
     -- Sy^S is a contractible groupoid ??
-
+    -- Day 6
     _◃→_ : {p p' q q' : Poly} → (f : Poly[ p , p' ]) → (g : Poly[ q , q' ]) → Poly[ p ◃ q , p' ◃ q' ]
     (onPos₁ ⇒ₚ onDir₁) ◃→ (onPos₂ ⇒ₚ onDir₂) = 
             (λ{ (posp , pdirtoq) → onPos₁ posp , λ{x → onPos₂ (pdirtoq (onDir₁ posp x))}}) 
             ⇒ₚ λ{(posp , snd₁) (fst₁ , snd₂) → (onDir₁ posp fst₁) , (onDir₂ (snd₁ (onDir₁ posp fst₁)) snd₂)}
 
+    _ : {p q : Poly} → Poly[ p ⊗ₚ q , p ◃ q ]
+    _ = (λ{ (posp , posq) → posp , λ _ → posq}) ⇒ₚ λ{ _ (fst₂ , snd₂) → fst₂ , snd₂}
+
+    -- (p +ₚ q) ◃ r ≈ (p ◃ r) +ₚ (q ◃ r)
+    -- (p ×ₚ q) ◃ r ≈ (p ◃ r) ×ₚ (q ◃ r)
 
 
 

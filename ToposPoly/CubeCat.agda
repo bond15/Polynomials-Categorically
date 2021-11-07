@@ -65,4 +65,5 @@ module CubeCat where
             square₂ :
              ∀ ( i : pos p)
                ( x : dir q (w i)) 
+               ( j : g o w ≡ v o f)
              → f♭ i (w♯ i x) ≡  v♯ (f i) {! g♭ (w i) x   !}
