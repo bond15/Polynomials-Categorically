@@ -17,3 +17,4 @@ TODO:
 - mu and nu for least and greatest fixed point
 - coalgebras (and unfold) as an alternative definition for systems 
 - relation to profunctors for optics?
+- Directed containers and Derivatives of Poly
