@@ -13,6 +13,7 @@ https://people.inf.elte.hu/divip/AgdaTutorial/Symbols.html
 
 
 TODO:
+- See also Agda stdlib containers
 - Can quantum circuits be expressed using Poly?
 - mu and nu for least and greatest fixed point
 - coalgebras (and unfold) as an alternative definition for systems 
