@@ -18,6 +18,20 @@ record Poly : Set where
     dir : pos -> Set
 open Poly
 
+
+module normalized where
+    -- Poly is the generic definition, We can also build up Poly inductively
+    -- Id
+    -- K
+    -- +
+    -- × 
+
+    -- Claim (Abbott): "Every such type expression can be normalized into a functor of the form"
+    -- P X ≡ Σ(n : ℕ) (A n × n → X)
+    -- Similar to the form Bartosz was using in his Ommatidia definition
+    -- how are coends involved?
+
+
 -- see container.agda
 
 -- The semantics ("extension") of a container.

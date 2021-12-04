@@ -248,6 +248,11 @@ PolyCat = record
 
 -- Could show that PolyCat is a subcategory of FunctorCat
 
+module Slice where
+    record SliceCategory(C : Category) (A : Ob C) : Set where
+        field 
+            -- obj : ∀ (X : Ob C) → ( ? ⇒ A)
+
 -- Comonoids in (Poly,𝓎,◃) are catefories??
 module ComonoidsAreCategories where
 
