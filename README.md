@@ -11,6 +11,10 @@ https://github.com/agda/agda-categories
 Agda unicode input
 https://people.inf.elte.hu/divip/AgdaTutorial/Symbols.html
 
+Q: are these the polynomial functors topologists and category theorists expect
+https://github.com/smimram/fibred-polynomials
+https://deepai.org/publication/a-cartesian-bicategory-of-polynomial-functors-in-homotopy-type-theory
+
 
 TODO:
 - See also Agda stdlib containers
