@@ -1,3 +1,5 @@
+
+![Alt text](foo"Poly")
 Attempting to formalize concepts from https://topos.site/poly-course/
 
 and also http://davidjaz.com/Papers/DynamicalBook.pdf
