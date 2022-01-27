@@ -1,5 +1,7 @@
 
-![Alt text](foo"Poly")
+![Alt text](./Poly.png "Poly")
+
+
 Attempting to formalize concepts from https://topos.site/poly-course/
 
 and also http://davidjaz.com/Papers/DynamicalBook.pdf
