@@ -1,6 +1,6 @@
 {-# OPTIONS --type-in-type #-}
 {-# OPTIONS --allow-unsolved-metas #-}
-
+{-# OPTIONS --without-K #-} -- why?
 module Category where 
 open import Base
 import Relation.Binary.PropositionalEquality as Eq
@@ -251,7 +251,12 @@ PolyCat = record
 module Slice where
     record SliceCategory(C : Category) (A : Ob C) : Set where
         field 
-            -- obj : ∀ (X : Ob C) → ( ? ⇒ A)
+           -- {domain} : Ob C
+            --obj : domain⇒ A)
+
+
+
+
 
 -- Comonoids in (Poly,𝓎,◃) are catefories??
 module ComonoidsAreCategories where
@@ -317,3 +322,7 @@ module Double where
              ∀ ( i : pos p)
                ( x : dir q (w i)) 
              → f♭ i (w♯ i x) ≡ {! v♯ (f i)  !} (g♭ (w i) x)
+
+
+
+
