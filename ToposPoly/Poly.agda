@@ -1,13 +1,10 @@
-{-# OPTIONS --without-K #-}
 {-# OPTIONS --allow-unsolved-metas #-}
 module Poly where 
-
-open import Base 
+open import ExampleTypes
+open import Cubical.Foundations.Everything renaming (Iso to _≅_)
 open import Data.Unit
-open import Data.Product renaming (proj₁ to π₁; proj₂ to π₂)
+open import Data.Product renaming (proj₁ to π₁; proj₂ to π₂) hiding (Σ-syntax)
 open import Data.Sum.Base using (_⊎_; inj₁ ; inj₂)
-import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; refl; trans; sym; cong; cong₂ ; cong-app; subst)
 
 record Poly : Set₁ where
   constructor _▹_
@@ -37,6 +34,9 @@ module normalized where
 -- in the other representation the underlying map induced a polynomial
 -- p : E -> B is the representing map where E b denotes the fiber p⁻¹(b)
 --  so E = Σ (b ∈ B) E b
+
+_；_ : {A B C : Set} → (A → B) → (B → C) → A → C
+f ； g = λ x → (g (f x))
 
 ⦅_⦆ : Poly → Set → Set
 ⦅ P ▹ D ⦆ X = Σ[ p ∈ P ] (D p → X)
@@ -73,15 +73,6 @@ p ⊗ₚ q = (pos × pos') ▹ λ{(x , y) → dir x × dir' y}
 _◃_ : Poly → Poly → Poly
 (p⑴ ▹ p[_] ) ◃ (q⑴ ▹ q[_]) = (Σ[ i ∈ p⑴ ] (p[ i ] → q⑴)) ▹ λ{ ( i , ĵ) → Σ[ d ∈ p[ i ] ]  q[ (ĵ d) ]}
 
-{- why is this here?
-record Polyₓ (p q : Poly) : Set where
-    open Poly p 
-    open Poly q renaming (pos to pos'; dir to dir')
-    field
-        posₓ : pos × pos' 
-        dirₓ : (pq : pos × pos' ) → dir (fst pq) ⊎ dir' (snd pq) 
--}
-
 record Poly[_,_](p q : Poly) : Set where
     constructor _⇒ₚ_
     open Poly p 
@@ -92,11 +83,11 @@ record Poly[_,_](p q : Poly) : Set where
 
 -- RENAME 
 _⇒∘ₚ_ : {p q r : Poly} → Poly[ p , q ] → Poly[ q , r ] → Poly[ p , r ]
-_⇒∘ₚ_ {p} {q} {r} pq qr = (onPos ؛ onPos') -- forward composition on positions
+_⇒∘ₚ_ {p} {q} {r} pq qr = (onPos ； onPos') -- forward composition on positions
                             ⇒ₚ 
                           λ ppos → let 
                                     qpos = onPos ppos
-                                    in onDir ppos o onDir' qpos -- backward composition on directions
+                                    in onDir ppos ∘ onDir' qpos -- backward composition on directions
     where 
         open Poly[_,_] pq 
         open Poly[_,_] qr renaming(onPos to onPos'; onDir to onDir')
@@ -118,20 +109,20 @@ record Chart (p q : Poly) : Set where
 -- Sigma Pi completion style..
 -- this is Pi Sigma 1?
 Poly[] : Poly → Poly → Set
-Poly[] p q = ∀ (i : pos) → Σ[ j ∈ pos' ] ∀ (_ : dir' j) → Σ[ _ ∈ (dir i)] Unit 
+Poly[] p q = ∀ (i : pos) → Σ[ j ∈ pos' ] ∀ (_ : dir' j) → Σ[ _ ∈ (dir i)] ⊤
     where 
         open Poly p 
         open Poly q renaming(pos to pos'; dir to dir')
 
-lemma-poly[]-iso : {p q : Poly} → Poly[] p q ≈ Poly[ p , q ]
-lemma-poly[]-iso {p} {q} = iso 
+lemma-poly[]-iso : {p q : Poly} → Poly[] p q ≅  Poly[ p , q ]
+lemma-poly[]-iso {p} {q} = i
     where 
-        open _≈_
+        open _≅_
         open Poly p 
         open Poly q renaming (pos to pos'; dir to dir')
         
-        iso : Poly[] p q ≈ Poly[ p , q ]
-        iso .to p[] = m ⇒ₚ n
+        i : Poly[] p q ≅ Poly[ p , q ]
+        i .fun p[] = m ⇒ₚ n
             where 
                 m : pos → pos'
                 m ppos = π₁(p[] ppos)
@@ -139,11 +130,11 @@ lemma-poly[]-iso {p} {q} = iso
                 n : (ppos : pos) → dir' (m ppos) → dir ppos
                 n ppos qdir = π₁ (π₂ (p[] ppos) qdir)
                 
-        iso .from [p,q] = λ ppos → onPos ppos , λ qdir → onDir ppos qdir , unit
+        i .inv [p,q] = λ ppos → onPos ppos , λ qdir → onDir ppos qdir , tt
             where open Poly[_,_] [p,q]
 
-        iso .from∘to []pq = Extensionality (λ ppos → {!   !})
-        iso .to∘from [p,q] = refl
+        i .rightInv []pq = {! funExt ? !} --Extensionality (λ ppos → {!   !})
+        i .leftInv [p,q] = refl 
 
     
 elem : Poly → Set
@@ -151,20 +142,27 @@ elem p = Σ[ p ∈ pos ] (dir p)
     where open Poly p
 
 
-lift : {X Y : Set} → (p : Poly) → (X → Y) → (⦅ p ⦆ X → ⦅ p ⦆ Y)
-lift p f = λ{ (fst₁ , snd₁) → fst₁ , snd₁ ؛ f}
+liftmap : {X Y : Set} → (p : Poly) → (X → Y) → (⦅ p ⦆ X → ⦅ p ⦆ Y)
+liftmap p f = λ{ (fst₁ , snd₁) → fst₁ , snd₁ ； f}
 
 yˢ : (S : Set) → Poly
-yˢ S = Unit ▹ λ _ → S
+yˢ S = ⊤ ▹ λ _ → S
 
 𝓎 : Poly
-𝓎 = Unit ▹ (λ _ → Unit)
+𝓎 = ⊤ ▹ (λ _ → ⊤)
 
-yoneda : {S : Set} → {q : Poly} → Poly[ yˢ S , q ] ≈ ⦅ q ⦆ S
-yoneda =  record { to = λ{ record { onPos = onPos ; onDir = onDir } → onPos unit , λ x → onDir unit x } 
-                    ; from = λ { (fst₁ , snd₁) → record { onPos = λ _ → fst₁ ; onDir = λ i → snd₁ } } 
-                    ; from∘to = λ{ record { onPos = onPos ; onDir = onDir } → {! refl  !} } 
-                    ; to∘from = λ { (fst₁ , snd₁) → refl } }
+-- any Lens is Iso to the underlying poly applied to S
+yoneda : {S : Set} → {q : Poly} → Poly[ yˢ S , q ] ≅  ⦅ q ⦆ S
+yoneda {S} {q} = i 
+    where 
+        open _≅_ 
+
+        i : Poly[ yˢ S , q ] ≅ ⦅ q ⦆ S
+        i .fun poly[,]              = onPos tt , onDir tt 
+                                        where open Poly[_,_] poly[,]
+        i .inv (pm , dm)            = (λ x → pm) ⇒ₚ λ x → dm
+        i .rightInv (pm , dm)       = refl
+        i .leftInv (onPos ⇒ₚ onDir) = refl
 
 
 -- Day 5 (Closures)
@@ -227,7 +225,7 @@ module ExampleMultivariate where
 
     assignVars : V → Set
     assignVars X = Bool
-    assignVars Y = Unit
+    assignVars Y = ⊤
     assignVars Z = ℕ
 
     _ : ⦅ mp ⦆⋆ assignVars 

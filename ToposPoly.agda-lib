@@ -1,4 +1,4 @@
 name: Poly
 include: ./ToposPoly/ ./
 depend: standard-library-1.7 cubical
-flags: -- cubical --no-import-sorts
+flags: --cubical --without-K
