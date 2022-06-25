@@ -1,22 +1,19 @@
-{-# OPTIONS --type-in-type #-}
 {-# OPTIONS --without-K #-}
 {-# OPTIONS --allow-unsolved-metas #-}
 module Poly where 
 
 open import Base 
 open import Data.Unit
-open import Agda.Builtin.Sigma 
-open import Data.Product
+open import Data.Product renaming (proj₁ to π₁; proj₂ to π₂)
 open import Data.Sum.Base using (_⊎_; inj₁ ; inj₂)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; trans; sym; cong; cong₂ ; cong-app; subst)
 
-record Poly : Set where
+record Poly : Set₁ where
   constructor _▹_
   field
     pos : Set
     dir : pos -> Set
-open Poly
 
 
 module normalized where
@@ -47,17 +44,26 @@ module normalized where
 -- the 4 monoidal structures on Poly
 
 _⊎ₚ_ : Poly → Poly → Poly
-p ⊎ₚ q = record { pos = pos p ⊎ pos q ; dir = λ { (inj₁ x) → (dir p) x
-                                                ; (inj₂ y) → (dir q) y } }
+p ⊎ₚ q = (pos ⊎ pos') ▹ λ {(inj₁ x) → dir x
+                        ;  (inj₂ y) → dir' y}
+    where 
+        open Poly p 
+        open Poly q renaming (pos to pos'; dir to dir')
 
 -- Ayᴮ × Cyᴰ = ACyᴮ⁺ᴰ
 _×ₚ_ : Poly → Poly → Poly
-p ×ₚ q = record { pos = pos p × pos q ; dir = λ {(i , j) → (dir p) i ⊎ (dir q) j} }
-
+p ×ₚ q = (pos × pos') ▹ λ{(x , y) →  dir x ⊎ dir' y} 
+    where 
+        open Poly p 
+        open Poly q renaming (pos to pos'; dir to dir')
+        
 --tensor \ox
 -- Ayᴮ × Cyᴰ = ACyᴮᴰ
 _⊗ₚ_ : Poly → Poly → Poly
-p ⊗ₚ q = record { pos = pos p × pos q ; dir = λ {(i , j) → (dir p) i × (dir q) j} }
+p ⊗ₚ q = (pos × pos') ▹ λ{(x , y) → dir x × dir' y}
+    where 
+        open Poly p 
+        open Poly q renaming (pos to pos'; dir to dir')
 -- show these are all monoidal structures on poly
 
 -- composition of polynomials
@@ -67,48 +73,82 @@ p ⊗ₚ q = record { pos = pos p × pos q ; dir = λ {(i , j) → (dir p) i × 
 _◃_ : Poly → Poly → Poly
 (p⑴ ▹ p[_] ) ◃ (q⑴ ▹ q[_]) = (Σ[ i ∈ p⑴ ] (p[ i ] → q⑴)) ▹ λ{ ( i , ĵ) → Σ[ d ∈ p[ i ] ]  q[ (ĵ d) ]}
 
-
+{- why is this here?
 record Polyₓ (p q : Poly) : Set where
+    open Poly p 
+    open Poly q renaming (pos to pos'; dir to dir')
     field
-        posₓ : pos p × pos q
-        dirₓ : (pq : pos p × pos q) → (dir p) (fst pq) ⊎ (dir q) (snd pq) 
-
+        posₓ : pos × pos' 
+        dirₓ : (pq : pos × pos' ) → dir (fst pq) ⊎ dir' (snd pq) 
+-}
 
 record Poly[_,_](p q : Poly) : Set where
     constructor _⇒ₚ_
+    open Poly p 
+    open Poly q renaming (pos to pos'; dir to dir')
     field
-        onPos : pos p → pos q
-        onDir : (i : pos p) → dir q (onPos i) → dir p i
-open Poly[_,_]
+        onPos : pos → pos'
+        onDir : (p : pos) → dir' (onPos p) → dir p
 
 -- RENAME 
 _⇒∘ₚ_ : {p q r : Poly} → Poly[ p , q ] → Poly[ q , r ] → Poly[ p , r ]
-pq ⇒∘ₚ qr = record { onPos = (onPos pq) ؛ (onPos qr) -- forward composition on positions
-                  ; onDir = λ i → ((onDir pq) i) o ((onDir qr) ((onPos pq) i)) } -- backward composition on directions
+_⇒∘ₚ_ {p} {q} {r} pq qr = (onPos ؛ onPos') -- forward composition on positions
+                            ⇒ₚ 
+                          λ ppos → let 
+                                    qpos = onPos ppos
+                                    in onDir ppos o onDir' qpos -- backward composition on directions
+    where 
+        open Poly[_,_] pq 
+        open Poly[_,_] qr renaming(onPos to onPos'; onDir to onDir')
+
 
 -- Chart
 -- forward on positions and forward on arrows
 --https://www.youtube.com/watch?v=FU9B-H6Tb4w&list=PLhgq-BqyZ7i6IjU82EDzCqgERKjjIPlmh&index=9
 -- found DJM's book! http://davidjaz.com/Papers/DynamicalBook.pdf
 record Chart (p q : Poly) : Set where
+    open Poly p 
+    open Poly q renaming (pos to pos'; dir to dir')
     field
-        onPos : pos p → pos q
-        onDir : (i : pos p) → dir p i → dir q (onPos i)
+        onPos : pos → pos' 
+        onDir : (p : pos) → dir p → dir' (onPos p) 
 
 -- write out the commuting square between the 4 polys
 
+-- Sigma Pi completion style..
+-- this is Pi Sigma 1?
 Poly[] : Poly → Poly → Set
-Poly[] p q = ∀ (i : pos p) → Σ (pos q) (λ (j : pos q) → ∀ (d : dir q j) → Σ (dir p i) λ c → Unit )
-
+Poly[] p q = ∀ (i : pos) → Σ[ j ∈ pos' ] ∀ (_ : dir' j) → Σ[ _ ∈ (dir i)] Unit 
+    where 
+        open Poly p 
+        open Poly q renaming(pos to pos'; dir to dir')
 
 lemma-poly[]-iso : {p q : Poly} → Poly[] p q ≈ Poly[ p , q ]
-lemma-poly[]-iso {p} {q} = record { to = λ p[] → record { onPos = λ ppos → fst( p[] ppos) ; onDir = λ ppos x → fst(snd(p[] ppos) x) } 
-                        ; from = λ poly[p,q] ppos → (onPos poly[p,q]) ppos , λ d → (onDir poly[p,q]) ppos d , unit 
-                        ; from∘to = λ poly[]pq → Extensionality λ x → {! ? !}
-                        ; to∘from = λ poly[p,q] → refl }
+lemma-poly[]-iso {p} {q} = iso 
+    where 
+        open _≈_
+        open Poly p 
+        open Poly q renaming (pos to pos'; dir to dir')
+        
+        iso : Poly[] p q ≈ Poly[ p , q ]
+        iso .to p[] = m ⇒ₚ n
+            where 
+                m : pos → pos'
+                m ppos = π₁(p[] ppos)
 
+                n : (ppos : pos) → dir' (m ppos) → dir ppos
+                n ppos qdir = π₁ (π₂ (p[] ppos) qdir)
+                
+        iso .from [p,q] = λ ppos → onPos ppos , λ qdir → onDir ppos qdir , unit
+            where open Poly[_,_] [p,q]
+
+        iso .from∘to []pq = Extensionality (λ ppos → {!   !})
+        iso .to∘from [p,q] = refl
+
+    
 elem : Poly → Set
-elem p = Σ (pos p) (dir p)
+elem p = Σ[ p ∈ pos ] (dir p)
+    where open Poly p
 
 
 lift : {X Y : Set} → (p : Poly) → (X → Y) → (⦅ p ⦆ X → ⦅ p ⦆ Y)
@@ -135,7 +175,7 @@ yoneda =  record { to = λ{ record { onPos = onPos ; onDir = onDir } → onPos u
 
 -- Set^Vars → Set
 -- or Set^I → Set
-record Polyₘ (Vars : Set) : Set where
+record Polyₘ (Vars : Set) : Set₁ where
     constructor _▹ₘ_
     field
         Pos : Set
@@ -376,4 +416,4 @@ module Example where
            ; P₁ (D₂ , D₁) → D₂
            ; P₁ (D₂ , D₂) → D₂
            ; P₁ (D₂ , D₃) → D₂}
--}
+-} 
