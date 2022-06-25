@@ -151,7 +151,6 @@ yˢ S = ⊤ ▹ λ _ → S
 𝓎 : Poly
 𝓎 = ⊤ ▹ (λ _ → ⊤)
 
--- any Lens is Iso to the underlying poly applied to S
 yoneda : {S : Set} → {q : Poly} → Poly[ yˢ S , q ] ≅  ⦅ q ⦆ S
 yoneda {S} {q} = i 
     where 
