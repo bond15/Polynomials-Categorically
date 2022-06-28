@@ -28,3 +28,6 @@ TODO:
 - relation to profunctors for optics?
 - Directed containers and Derivatives of Poly http://www.cs.nott.ac.uk/~psztxa/publ/jpartial.pdf https://danel.ahman.ee/papers/fossacs12.pdf
 - https://diagrams.github.io/ (drawing wiring diagrams?)
+
+
+Prove comonads in poly are categories
