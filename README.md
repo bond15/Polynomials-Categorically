@@ -19,6 +19,9 @@ Q: are these the polynomial functors topologists and category theorists expect
 https://github.com/smimram/fibred-polynomials
 https://deepai.org/publication/a-cartesian-bicategory-of-polynomial-functors-in-homotopy-type-theory
 
+6-28-22
+recent talk by David, prove the theorems
+https://www.youtube.com/watch?v=IIqCNibMisI
 
 TODO:
 - See also Agda stdlib containers
