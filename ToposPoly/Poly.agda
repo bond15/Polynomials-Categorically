@@ -73,6 +73,23 @@ p ⊗ₚ q = (pos × pos') ▹ λ{(x , y) → dir x × dir' y}
 _◃_ : Poly → Poly → Poly
 (p⑴ ▹ p[_] ) ◃ (q⑴ ▹ q[_]) = (Σ[ i ∈ p⑴ ] (p[ i ] → q⑴)) ▹ λ{ ( i , ĵ) → Σ[ d ∈ p[ i ] ]  q[ (ĵ d) ]}
 
+
+
+-- internal hom
+{-
+record Poly : Set₁ where
+  constructor _◂_◂_ 
+  field
+    pos : Set
+    dir : pos → Set
+    α : (p : pos)(d : dir p) → Set
+
+open import Data.Product
+
+_⇒_ : Poly → Poly → Poly
+(p₁ ◂ d₁ ◂ α) ⇒ (p₂ ◂ d₂ ◂ β) = Σ (p₁ → p₂) (λ f → (u : p₁)(y : d₂ (f u))→ d₁ u) ◂ (λ{ (f , F) → Σ p₁ (λ u → d₂(f u))}) ◂ λ{ (f , F) (u , y) → α u (F u y) × β (f u) y}
+-}
+
 record Poly[_,_](p q : Poly) : Set where
     constructor _⇒ₚ_
     open Poly p 
